@@ -1,0 +1,53 @@
+#!/usr/bin/env ruby
+
+DEFAULT_INPUT_PATH = 'data/in.txt'
+
+END {
+  arg1, arg2 = ARGV
+  if arg1 && arg1 == '-h'
+    puts 'Usage: ./solve [PART] [INPUT_PATH]'
+    puts 'PART: 1 or 2, default: both'
+    puts 'INPUT_PATH: path to the input file, default: data/in.txt'
+    exit
+  end
+
+  if arg1.nil? && arg2.nil?
+    input_path = DEFAULT_INPUT_PATH
+    part1(input_path)
+    part2(input_path)
+  else
+    input_path = arg2.nil? ? DEFAULT_INPUT_PATH : arg2
+    case arg1
+    when '1'
+      part1(input_path)
+    when '2'
+      part2(input_path)
+    else
+      part1(arg1)
+      part2(arg1)
+    end
+  end
+}
+
+def part1(input_path)
+  puts "Part 1 for file: #{input_path}"
+  # _input = File.read(input_path)
+  # res = input.split("\n")
+  #              .map { |line|
+  #                # TODO: implement logic here
+  #              }.sum
+  res = 42
+  puts "Answer Part 1: #{res}"
+end
+
+def part2(input_path)
+  puts "Part 2 for file: #{input_path}"
+  # _input = File.read(input_path)
+  # res = input.split("\n")
+  #              .map { |line|
+  #                # TODO: implement logic here
+  #              }.sum
+  res = 42
+  puts "Answer Part 2: #{res}"
+end
+
