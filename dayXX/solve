@@ -1,9 +1,11 @@
 #!/usr/bin/env ruby
 
-require '../cmd_line_parser'
+require '../cmd_line_helper'
 
 END {
-  run :part1, :part2
+  part1_fun = ->(input_path) { part1(input_path) }
+  part2_fun = ->(input_path) { part2(input_path) }
+  run part1_fun, part2_fun
 }
 
 def part1(input_path)

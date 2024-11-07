@@ -1,4 +1,4 @@
-DEFAULT_INPUT_PATH = 'data/in.txt'
+DEFAULT_INPUT_PATH = 'data/in.txt'.freeze
 
 def run(fun1, fun2)
   arg1, arg2 = ARGV
@@ -11,18 +11,18 @@ def run(fun1, fun2)
 
   if arg1.nil? && arg2.nil?
     input_path = DEFAULT_INPUT_PATH
-    send fun1, input_path
-    send fun2, input_path
+    fun1.call input_path
+    fun2.call input_path
   else
     input_path = arg2.nil? ? DEFAULT_INPUT_PATH : arg2
     case arg1
     when '1'
-      send fun1, input_path
+      fun1.call input_path
     when '2'
-      send fun2, input_path
+      fun2.call input_path
     else
-      send fun1, arg1
-      send fun1, arg2
+      fun1.call arg1
+      fun2.call arg1
     end
   end
 end
