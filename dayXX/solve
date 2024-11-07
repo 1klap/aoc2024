@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require '../cmd_line_helper'
+require_relative '../cmd_line_helper'
 
 END {
   part1_fun = ->(input_path) { part1(input_path) }
