@@ -71,8 +71,8 @@ def is_safe_with_dampener?(levels, count:)
       return false if count.zero?
 
       return (index > 1 ? is_safe_with_dampener?(levels_without_index(levels, index - 2), count: count - 1) : false) ||
-        is_safe_with_dampener?(levels_without_index(levels, index - 1), count: count - 1) ||
-        is_safe_with_dampener?(levels_without_index(levels, index), count: count - 1)
+             is_safe_with_dampener?(levels_without_index(levels, index - 1), count: count - 1) ||
+             is_safe_with_dampener?(levels_without_index(levels, index), count: count - 1)
     end
   end
   true
