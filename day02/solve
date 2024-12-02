@@ -20,7 +20,8 @@ end
 def is_safe?(levels)
   initial_direction = nil
   levels.each_with_index do |level, index|
-    next if index == 0
+    next if index.zero?
+
     prev_level = levels[index - 1]
     direction = get_direction(level, prev_level)
     if index == 1
@@ -35,7 +36,7 @@ def is_safe?(levels)
 end
 
 def get_direction(level, prev_level)
-  level - prev_level < 0 ? :desc : :asc
+  (level - prev_level).negative? ? :desc : :asc
 end
 
 def part2(input_path)
@@ -50,15 +51,16 @@ end
 def is_safe_with_dampener?(levels, count:)
   initial_direction = nil
   levels.each_with_index do |level, index|
-    next if index == 0
+    next if index.zero?
+
     prev_level = levels[index - 1]
     direction = get_direction(level, prev_level)
     if index == 1
       initial_direction = direction
     else
       if direction != initial_direction
-        # puts "Unsafe direction: #{levels}" if count == 0
-        return false if count == 0
+        return false if count.zero?
+
         return (index > 1 ? is_safe_with_dampener?(levels_without_index(levels, index - 2), count: count - 1) : false) ||
                is_safe_with_dampener?(levels_without_index(levels, index - 1), count: count - 1) ||
                is_safe_with_dampener?(levels_without_index(levels, index), count: count - 1)
@@ -66,8 +68,8 @@ def is_safe_with_dampener?(levels, count:)
     end
     distance = (level - prev_level).abs
     if distance < 1 || distance > 3
-      # puts "Unsafe distance: #{levels}" if count == 0
-      return false if count == 0
+      return false if count.zero?
+
       return (index > 1 ? is_safe_with_dampener?(levels_without_index(levels, index - 2), count: count - 1) : false) ||
         is_safe_with_dampener?(levels_without_index(levels, index - 1), count: count - 1) ||
         is_safe_with_dampener?(levels_without_index(levels, index), count: count - 1)
