@@ -1,0 +1,83 @@
+#!/usr/bin/env ruby
+
+require_relative '../cmd_line_helper'
+
+END {
+  part1_fun = ->(input_path) { part1(input_path) }
+  part2_fun = ->(input_path) { part2(input_path) }
+  run part1_fun, part2_fun
+}
+
+def part1(input_path)
+  puts "Part 1 for file: #{input_path}"
+  input = File.read(input_path)
+  res = input.split("\n")
+             .map { |line| is_safe?(line.split(' ').map(&:to_i)) }
+             .tally
+  puts "Answer Part 1: #{res[true]}"
+end
+
+def is_safe?(levels)
+  initial_direction = nil
+  levels.each_with_index do |level, index|
+    next if index == 0
+    prev_level = levels[index - 1]
+    direction = get_direction(level, prev_level)
+    if index == 1
+      initial_direction = direction
+    else
+      return false if direction != initial_direction
+    end
+    distance = (level - prev_level).abs
+    return false if distance < 1 || distance > 3
+  end
+  true
+end
+
+def get_direction(level, prev_level)
+  level - prev_level < 0 ? :desc : :asc
+end
+
+def part2(input_path)
+  puts "Part 2 for file: #{input_path}"
+  input = File.read(input_path)
+  res = input.split("\n")
+             .map { |line| is_safe_with_dampener?(line.split(' ').map(&:to_i), count: 1) }
+             .tally
+  puts "Answer Part 2: #{res[true]}"
+end
+
+def is_safe_with_dampener?(levels, count:)
+  initial_direction = nil
+  levels.each_with_index do |level, index|
+    next if index == 0
+    prev_level = levels[index - 1]
+    direction = get_direction(level, prev_level)
+    if index == 1
+      initial_direction = direction
+    else
+      if direction != initial_direction
+        # puts "Unsafe direction: #{levels}" if count == 0
+        return false if count == 0
+        return (index > 1 ? is_safe_with_dampener?(levels_without_index(levels, index - 2), count: count - 1) : false) ||
+               is_safe_with_dampener?(levels_without_index(levels, index - 1), count: count - 1) ||
+               is_safe_with_dampener?(levels_without_index(levels, index), count: count - 1)
+      end
+    end
+    distance = (level - prev_level).abs
+    if distance < 1 || distance > 3
+      # puts "Unsafe distance: #{levels}" if count == 0
+      return false if count == 0
+      return (index > 1 ? is_safe_with_dampener?(levels_without_index(levels, index - 2), count: count - 1) : false) ||
+        is_safe_with_dampener?(levels_without_index(levels, index - 1), count: count - 1) ||
+        is_safe_with_dampener?(levels_without_index(levels, index), count: count - 1)
+    end
+  end
+  true
+end
+
+def levels_without_index(levels, index)
+  dampened_levels = levels.clone
+  dampened_levels.delete_at index
+  dampened_levels
+end
