@@ -1,0 +1,93 @@
+#!/usr/bin/env ruby
+
+require_relative '../cmd_line_helper'
+
+END {
+  part1_fun = ->(input_path) { part1(input_path) }
+  part2_fun = ->(input_path) { part2(input_path) }
+  run part1_fun, part2_fun
+}
+
+def part1(input_path)
+  puts "Part 1 for file: #{input_path}"
+  input = File.read(input_path)
+  grid = input.split("\n").map(&:chars)
+  # draw grid
+  x_positions = positions_for_symbol(grid, 'X')
+  vectors = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]]
+  res = 0
+  x_positions.each do |x, y|
+    vectors.each do |vector|
+      res += 1 if grid_contains? grid, vector, x, y, ['M', 'A', 'S']
+    end
+  end
+  puts "Answer Part 1: #{res}"
+end
+
+def positions_for_symbol(grid, symbol)
+  x_positions = []
+  grid.each_with_index.map do |row, y|
+    row.each_with_index.map do |cell, x|
+      x_positions << [x, y] if cell == symbol
+    end
+  end
+  x_positions
+end
+
+def grid_contains?(grid, v, x, y, matches)
+  x_length = grid[0].size
+  y_length = grid.size
+  return false if v[0] == 1 && (x + matches.count) >= x_length
+  return false if v[0] == -1 && (x - matches.count) < 0
+  return false if v[1] == 1 && (y + matches.count) >= y_length
+  return false if v[1] == -1 && (y - matches.count) < 0
+  matches.each_with_index do |match, i|
+    return false unless grid[y + (v[1] * (i+1))][x + (v[0] * (i+1))] == match
+  end
+  true
+end
+
+def part2(input_path)
+  puts "Part 2 for file: #{input_path}"
+  input = File.read(input_path)
+  grid = input.split("\n").map(&:chars)
+  # draw grid
+  a_positions = positions_for_symbol(grid, 'A')
+  res = 0
+  a_positions.each do |x, y|
+    res += 1 if position_is_x? grid, x, y
+  end
+  puts "Answer Part 2: #{res}"
+end
+
+def position_is_x?(grid, x, y)
+  return false if x <= 0 || y <= 0 || (x+1) >= grid[0].size || (y+1) >= grid.size
+  case grid[y-1][x-1]
+  when 'M'
+    return false if grid[y+1][x+1] != 'S'
+  when 'S'
+    return false if grid[y+1][x+1] != 'M'
+  else
+    return false
+  end
+  case grid[y-1][x+1]
+  when 'M'
+    return false if grid[y+1][x-1] != 'S'
+  when 'S'
+    return false if grid[y+1][x-1] != 'M'
+  else
+    return false
+  end
+  true
+end
+
+# (0,0) is top left, x goes right, y goes down
+def draw(grid)
+  (0...grid.length).each do |y|
+    (0...grid[0].length).each do |x|
+      print grid[y][x]
+    end
+    print "\n"
+  end
+end
+
