@@ -1,0 +1,118 @@
+#!/usr/bin/env ruby
+
+require_relative '../cmd_line_helper'
+
+END {
+  part1_fun = ->(input_path) { part1(input_path) }
+  part2_fun = ->(input_path) { part2(input_path) }
+  run part1_fun, part2_fun
+}
+
+def part1(input_path)
+  puts "Part 1 for file: #{input_path}"
+  input = File.read(input_path)
+  s = input.split("\n\n")
+  rules = s[0].split("\n").map { |r| r.split("|").map(&:to_i) }
+  updates = s[1].split("\n").map { |u| u.split(",").map(&:to_i) }
+  correct_updates = updates.select { |update| respects_rules?(update, rules) }
+  res = correct_updates.map { |u| u[(u.size-1) / 2]}.sum
+  puts "Answer Part 1: #{res}"
+end
+
+def respects_rules?(update, rules)
+  update.each do |page|
+    applicable_rules = rules.select { |r| r[0] == page }
+    applicable_rules.each do |rule|
+      return false if update.index(rule[1]) && update.index(page) > update.index(rule[1])
+    end
+  end
+  true
+end
+
+def part2(input_path)
+  puts "Part 1 for file: #{input_path}"
+  input = File.read(input_path)
+  s = input.split("\n\n")
+  rules = s[0].split("\n").map { |r| r.split("|").map(&:to_i) }
+  updates = s[1].split("\n").map { |u| u.split(",").map(&:to_i) }
+  incorrect_updates = updates.reject { |update| respects_rules?(update, rules) }
+  corrected_updates = incorrect_updates.map { |update| correct_update(update, rules) }
+  res = corrected_updates.map { |u| u[(u.size-1) / 2]}.sum
+  puts "Answer Part 1: #{res}"
+end
+
+def correct_update(update, rules)
+  update.each do |page|
+    applicable_rules = rules.select { |r| r[0] == page }
+    applicable_rules.each do |rule|
+      if update.index(rule[1]) && update.index(page) > update.index(rule[1])
+        update.delete(page)
+        insert_at = update.index(rule[1])
+        # p "inserting #{page} at #{insert_at} because rule #{rule}"
+        update.insert(insert_at, page)
+      end
+    end
+  end
+  update
+end
+
+# FIXME: broken
+def part1X(input_path)
+  puts "Part 1 for file: #{input_path}"
+  input = File.read(input_path)
+  s = input.split("\n\n")
+  rules = s[0].split("\n").map { |r| r.split("|").map(&:to_i) }
+  updates = s[1].split("\n").map { |u| u.split(",").map(&:to_i) }
+  p "rules: #{rules}"
+  p "updates: #{updates}"
+  ordered_pages = order_from_rules(rules)
+  p "ordered_pages: #{ordered_pages}"
+  rules.each do |rule|
+    if ordered_pages.index(rule[0]) > ordered_pages.index(rule[1])
+      p "violates rule: #{rule}"
+    end
+  end
+  correct_updates = updates.select { |u| correct_order?(u, ordered_pages) }
+  p "correct_updates: #{correct_updates}"
+  res = correct_updates.map { |u| u[(u.size-1) / 2]}.sum
+  puts "Answer Part 1: #{res}"
+end
+
+# FIXME: this is not working, no convergence
+def order_from_rules(rules)
+  ordered_pages = rules.reduce([]) do |acc, rule|
+    acc << rule[0] unless acc.include?(rule[0])
+    acc << rule[1] unless acc.include?(rule[1])
+    acc
+  end
+  p "ordered_pages unsorted: #{ordered_pages}"
+  applicable_rules = rules.dup
+  while applicable_rules.size > 1
+    rule = applicable_rules[0]
+    if ordered_pages.index(rule[0]) > ordered_pages.index(rule[1])
+      ordered_pages.delete(rule[0])
+      insert_at = ordered_pages.index(rule[1])
+      ordered_pages.insert(insert_at, rule[0])
+      # p "inserting #{rule[0]} at #{insert_at} because rule #{rule}"
+      applicable_rules += rules.select { |r| r[0] == rule[1] }
+    end
+    applicable_rules.delete(rule)
+    # p "appliable_rules size: #{applicable_rules.size}"
+  end
+
+  # rules.each do |rule|
+  #   if ordered_pages.index(rule[0]) > ordered_pages.index(rule[1])
+  #     ordered_pages.delete(rule[0])
+  #     insert_at = ordered_pages.index(rule[1])
+  #     ordered_pages.insert(insert_at, rule[0])
+  #     p "inserting #{rule[0]} at #{insert_at} because rule #{rule}"
+  #   end
+  # end
+  ordered_pages
+end
+
+def correct_order?(update, ordered_pages)
+  indices = update.map { |u| ordered_pages.index(u) }
+  indices == indices.sort
+end
+
