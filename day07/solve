@@ -12,11 +12,11 @@ def part1(input_path)
   puts "Part 1 for file: #{input_path}"
   input = File.read(input_path)
   equations = input.split("\n")
-               .map { |line|
-                 s = line.split(":")
-                 { result: s[0].to_i, operands: s[1].split(" ").map(&:to_i) }
-               }
-  valid_equations = equations.select { |eq| operators_exist? eq, ["+", "*"] }
+                   .map { |line|
+                     s = line.split(':')
+                     { result: s[0].to_i, operands: s[1].split(' ').map(&:to_i) }
+                   }
+  valid_equations = equations.select { |eq| operators_exist? eq, ['+', '*'] }
   res = valid_equations.map { |eq| eq[:result] }.sum
   puts "Answer Part 1: #{res}"
 end
@@ -24,9 +24,7 @@ end
 def operators_exist?(eq, operators)
   operator_count = eq[:operands].size - 1
   operators.repeated_permutation(operator_count).any? do |op|
-    res = calculate(eq[:operands].dup, op.dup)
-    # p "MATCH: eq: #{eq}, op: #{op}, res: #{res}" if res == eq[:result]
-    eq[:result] == res
+    eq[:result] == calculate(eq[:operands].dup, op.dup)
   end
 end
 
@@ -35,11 +33,12 @@ def calculate(operands, operators)
   while operands.any?
     operator = operators.shift
     operand = operands.shift
-    if operator == "||"
-      current = (current.to_s + operand.to_s).to_i
-    else
-      current = current.send(operator, operand)
-    end
+    current = case operator
+              when '||'
+                (current.to_s + operand.to_s).to_i
+              else
+                current.send(operator, operand)
+              end
   end
   current
 end
@@ -49,10 +48,10 @@ def part2(input_path)
   input = File.read(input_path)
   equations = input.split("\n")
                    .map { |line|
-                     s = line.split(":")
-                     { result: s[0].to_i, operands: s[1].split(" ").map(&:to_i) }
+                     s = line.split(':')
+                     { result: s[0].to_i, operands: s[1].split(' ').map(&:to_i) }
                    }
-  valid_equations = equations.select { |eq| operators_exist? eq, ["+", "*", "||"] }
+  valid_equations = equations.select { |eq| operators_exist? eq, ['+', '*', '||'] }
   res = valid_equations.map { |eq| eq[:result] }.sum
   puts "Answer Part 2: #{res}"
 end

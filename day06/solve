@@ -70,28 +70,32 @@ def part2(input_path)
   grid = input.split("\n").map(&:chars)
   starting_cursor = find_starting_cursor(grid)
   cursor = starting_cursor.dup
+  # p "starting cursor: #{cursor}"
   grid[cursor[:position][1]][cursor[:position][0]] = '.'
   # draw grid
   # p "-----------"
   visited = find_visited_nodes(grid, cursor)
-  p "visited=#{visited}"
+  # p "visited=#{visited}"
   p "visited#=#{visited.size}"
   # raise
   loop_count = 0
   visited = visited.delete starting_cursor[:position]
   visited.each_with_index do |v, index|
-    p "#{index + 1} of #{visited.size}: object in #{v}"
+    # p "#{index + 1} of #{visited.size}: object in #{v}"
     grid[v[1]][v[0]] = '#'
     cursor = starting_cursor.dup
+    # p "starting cursor loop: #{cursor}"
+    loop_length = 0
     cursor_log = Set.new
     begin
       while true
+        loop_length += 1
         cursor_log << signature(cursor)
         cursor = move_cursor(grid, cursor)
         # p "new cursor: #{cursor}"
         if cursor_log.include?(signature(cursor))
           # p "found loop cursor_log=#{cursor_log} cursor=#{cursor}"
-          # p "found loop"
+          p "loop_length=#{loop_length}: #{index + 1} of #{visited.size}: object in #{v}"
           loop_count += 1
           break
         end
