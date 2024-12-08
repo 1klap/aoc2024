@@ -20,11 +20,10 @@ end
 
 def find_visited_nodes(grid, cursor)
   visited = Set.new
-  visited << cursor[:position]
   begin
     while true
+      visited << cursor[:position]
       cursor = move_cursor(grid, cursor)
-      visited << cursor[:position] unless visited.include?(cursor[:position])
     end
   rescue StandardError => e
     # p e
@@ -49,12 +48,16 @@ def move_cursor(grid, cursor)
   raise StandardError.new("Cursor out of bounds: #{cursor}") if x < 0 || x >= grid[0].size || y < 0 || y >= grid.size
   case cursor[:direction]
   when :up
+    raise StandardError.new("Cursor out of bounds: #{cursor}") if y == 0
     grid[y - 1][x] == '#' ? cursor[:direction] = :right : cursor[:position] = [x, y - 1]
   when :right
+    raise StandardError.new("Cursor out of bounds: #{cursor}") if x == grid[0].size - 1
     grid[y][x + 1] == '#' ? cursor[:direction] = :down : cursor[:position] = [x + 1, y]
   when :down
+    raise StandardError.new("Cursor out of bounds: #{cursor}") if y == grid.size - 1
     grid[y + 1][x] == '#' ? cursor[:direction] = :left : cursor[:position] = [x, y + 1]
   when :left
+    raise StandardError.new("Cursor out of bounds: #{cursor}") if x == 0
     grid[y][x - 1] == '#' ? cursor[:direction] = :up : cursor[:position] = [x - 1, y]
   else
     raise ArgumentError "Unknown direction: #{cursor[:direction]}"
@@ -70,43 +73,31 @@ def part2(input_path)
   grid = input.split("\n").map(&:chars)
   starting_cursor = find_starting_cursor(grid)
   cursor = starting_cursor.dup
-  # p "starting cursor: #{cursor}"
   grid[cursor[:position][1]][cursor[:position][0]] = '.'
-  # draw grid
-  # p "-----------"
   visited = find_visited_nodes(grid, cursor)
-  # p "visited=#{visited}"
-  p "visited#=#{visited.size}"
-  # raise
   loop_count = 0
   visited = visited.delete starting_cursor[:position]
   visited.each_with_index do |v, index|
     # p "#{index + 1} of #{visited.size}: object in #{v}"
     grid[v[1]][v[0]] = '#'
     cursor = starting_cursor.dup
-    # p "starting cursor loop: #{cursor}"
-    loop_length = 0
     cursor_log = Set.new
     begin
       while true
-        loop_length += 1
-        cursor_log << signature(cursor)
-        cursor = move_cursor(grid, cursor)
-        # p "new cursor: #{cursor}"
         if cursor_log.include?(signature(cursor))
-          # p "found loop cursor_log=#{cursor_log} cursor=#{cursor}"
-          p "loop_length=#{loop_length}: #{index + 1} of #{visited.size}: object in #{v}"
           loop_count += 1
           break
         end
+        cursor_log << signature(cursor)
+        cursor = move_cursor(grid, cursor)
       end
     rescue StandardError => e
       # p e
+      # draw_with_loop grid, cursor_log, cursor, v
     ensure
       grid[v[1]][v[0]] = '.'
     end
   end
-  # draw grid
   res = loop_count
   puts "Answer Part 2: #{res}"
 end
@@ -125,4 +116,23 @@ def draw(grid)
   end
 end
 
-# 2168 too high
+def draw_with_loop(grid, cursor_log, cursor, v)
+  (0...grid.length).each do |y|
+    (0...grid[0].length).each do |x|
+      if v == [x, y]
+        print 'O'
+      elsif cursor_log.include?(signature({ position: [x, y], direction: :up }))
+        print 'U'
+      elsif cursor_log.include?(signature({ position: [x, y], direction: :right }))
+        print 'R'
+      elsif cursor_log.include?(signature({ position: [x, y], direction: :down }))
+        print 'D'
+      elsif cursor_log.include?(signature({ position: [x, y], direction: :left }))
+        print 'L'
+      else
+        print grid[y][x]
+      end
+    end
+    print "\n"
+  end
+end
