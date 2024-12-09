@@ -11,7 +11,7 @@ END {
 def part1(input_path)
   puts "Part 1 for file: #{input_path}"
   input = File.read(input_path)
-  fs = expand input
+  fs = expand input.strip
   frag fs
   res = checksum fs
   puts "Answer Part 1: #{res}"
@@ -20,10 +20,8 @@ end
 def expand(disk_map)
   fs = []
   disk_map.chars.each_with_index do |c, i|
-    is_file = i.even?
-    ci = c.to_i
-    ci.times do
-      fs << (is_file ? (i / 2) : '.')
+    c.to_i.times do
+      fs << (i.even? ? (i / 2) : '.')
     end
   end
   fs
@@ -48,19 +46,17 @@ end
 def part2(input_path)
   puts "Part 2 for file: #{input_path}"
   input = File.read(input_path)
-  fs_model = map_to_model input
+  fs_model = map_to_model input.strip
   defrag_model fs_model
   res = checksum expand_model(fs_model)
   puts "Answer Part 2: #{res}"
 end
 
+# disk map: 12345
+# becomes model (fid: file id, l: length):
+# [{:fid=>0, :l=>1}, {:fid=>\".\", :l=>2}, {:fid=>1, :l=>3}, {:fid=>\".\", :l=>4}, {:fid=>2, :l=>5}]
 def map_to_model(fs_map)
-  fs_model = []
-  fs_map.chars.each_with_index do |c, i|
-    is_file = i.even?
-    fs_model << { fid: is_file ? (i / 2) : '.', l: c.to_i }
-  end
-  fs_model
+  fs_map.chars.map.with_index { |c, i| { fid: i.even? ? (i / 2) : '.', l: c.to_i } }
 end
 
 def expand_model(model)
