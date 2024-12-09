@@ -12,17 +12,15 @@ def part1(input_path)
   puts "Part 1 for file: #{input_path}"
   input = File.read(input_path)
   fs = expand input
-  # p "fs: #{fs}"
   frag fs
-  # p "fragged: #{fs}"
   res = checksum fs
   puts "Answer Part 1: #{res}"
 end
 
-def expand(input)
+def expand(disk_map)
   fs = []
-  input.chars.each_with_index do |c, i|
-    is_file = i % 2 == 0
+  disk_map.chars.each_with_index do |c, i|
+    is_file = i.even?
     ci = c.to_i
     ci.times do
       fs << (is_file ? (i / 2) : '.')
@@ -32,53 +30,42 @@ def expand(input)
 end
 
 def frag(fs)
-  free_positions = fs.each_with_index.select { |c, i| c == '.' }
-  free_positions.each do |c, i|
-    last_file = nil
-    last_file_index = nil
-    fs.reverse_each.with_index do |c, i|
-      if c != '.'
-        last_file = c
-        last_file_index = (fs.size - 1) - i
-        break
-      end
-    end
-    break if i > last_file_index
+  free_positions = fs.each_with_index.select { |c, _| c == '.' }
+  free_positions.each do |e|
+    index = e[1]
+    last_file_index = fs.rindex { |c| c != '.' } # lookup from the end
+    break if !last_file_index || index > last_file_index
+
+    fs[index] = fs[last_file_index]
     fs[last_file_index] = '.'
-    fs[i] = last_file
   end
 end
 
 def checksum(fs)
-  fs.each_with_index.select { |c, i| c != '.' }.map { |c, i| c * i }.sum
+  fs.each_with_index.reject { |c, _| c == '.' }.map { |c, i| c * i }.sum
 end
 
 def part2(input_path)
   puts "Part 2 for file: #{input_path}"
   input = File.read(input_path)
   fs_model = map_to_model input
-  # p "fs_model: #{fs_model}"
-  # p "fs: #{expand_model fs_model}"
   defrag_model fs_model
-  # p "defragged model: #{fs_model}"
-  defragged_fs = expand_model fs_model
-  # p "defragged fs: #{defragged_fs}"
-  res = checksum defragged_fs
+  res = checksum expand_model(fs_model)
   puts "Answer Part 2: #{res}"
 end
 
-def map_to_model(input)
-  fs = []
-  input.chars.each_with_index do |c, i|
-    is_file = i % 2 == 0
-    fs << { fid: is_file ? (i / 2) : '.', l: c.to_i }
+def map_to_model(fs_map)
+  fs_model = []
+  fs_map.chars.each_with_index do |c, i|
+    is_file = i.even?
+    fs_model << { fid: is_file ? (i / 2) : '.', l: c.to_i }
   end
-  fs
+  fs_model
 end
 
-def expand_model(m)
+def expand_model(model)
   fs = []
-  m.each do |c|
+  model.each do |c|
     c[:l].times do
       fs << c[:fid]
     end
@@ -86,24 +73,24 @@ def expand_model(m)
   fs
 end
 
-def defrag_model(m)
-  candidates = m.select { |e| e[:fid] != '.' }.reverse
+def defrag_model(model)
+  candidates = model.reject { |e| e[:fid] == '.' }.reverse
   candidates.each do |c|
-    move_left m, c
+    move_left model, c
   end
 end
 
-def move_left(m, c)
-  candidate_index = m.index c
-  c_dup = c.dup
-  free_position_index = m.find_index { |e| e[:fid] == '.' && e[:l] >= c[:l] }
-  if free_position_index && free_position_index < candidate_index
-    m[candidate_index][:fid] = '.'
-    free_position = m[free_position_index]
-    m.delete_at free_position_index
-    m.insert free_position_index, c_dup
-    if free_position[:l] > c_dup[:l]
-      m.insert free_position_index + 1, { fid: '.', l: free_position[:l] - c_dup[:l] }
-    end
-  end
+def move_left(model, candidate)
+  candidate_index = model.index candidate
+  free_position_index = model.find_index { |e| e[:fid] == '.' && e[:l] >= candidate[:l] }
+  return unless free_position_index && free_position_index < candidate_index
+
+  candidate_copy = candidate.dup
+  model[candidate_index][:fid] = '.' # clear the candidate
+  free_position = model.delete_at free_position_index
+  model.insert free_position_index, candidate_copy # insert copy of candidate
+  return unless free_position[:l] > candidate[:l]
+
+  # insert a new remaining free position
+  model.insert free_position_index + 1, { fid: '.', l: free_position[:l] - candidate[:l] }
 end
