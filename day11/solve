@@ -12,12 +12,7 @@ def part1(input_path)
   puts "Part 1 for file: #{input_path}"
   input = File.read(input_path)
   stones = input.strip.split(' ').map(&:to_i)
-  p "stones: #{stones}"
-  25.times do |i|
-    stones = blink(stones)
-    # p "stones: #{stones}"
-    p "#{i}: stones count: #{stones.tally.sort_by { |k, v| k }}"
-  end
+  25.times { stones = blink(stones) }
   res = stones.size
   puts "Answer Part 1: #{res}"
 end
@@ -45,51 +40,33 @@ end
 def part2(input_path)
   puts "Part 2 for file: #{input_path}"
   input = File.read(input_path)
-  stones = input.strip.split(' ').map(&:to_i)
-  stones_count = stones.tally
-  p "stones: #{stones}"
-  p "stones count: #{stones_count}"
-  75.times do |i|
-    stones_count = blink_count(stones_count)
-    # p "#{i}: stones: #{stones_count.sort_by { |k, v| k }}"
-  end
+  stones_count = input.strip.split(' ').map(&:to_i).tally
+  75.times { stones_count = blink_count(stones_count) }
   res = stones_count.values.sum
   puts "Answer Part 2: #{res}"
 end
 
 def blink_count(stones_count)
-  new_count = {}
+  next_count = {}
   stones_count.each do |stone, count|
-    # p "stone: #{stone}, count: #{count}"
     if stone == 0
-      # existing_one = stones_count[1] || 0
-      existing_one = new_count[1] || 0
-      new_count[1] = existing_one + count
+      next_count[1] = (next_count[1] || 0) + count
     else
       stone_string = stone.to_s
       if stone_string.size.even?
         left = stone_string.slice(0, stone_string.size / 2).to_i
         right = stone_string.slice(stone_string.size / 2, stone_string.size).to_i
-        # existing_right = stones_count[right] || 0
-        # existing_left = stones_count[left] || 0
         if left == right
-          new_right = new_count[right] || 0
-          new_count[right] = new_right + (2 * count)
+          next_count[left] = (next_count[left] || 0) + (2 * count)
         else
-          new_right = new_count[right] || 0
-          new_left = new_count[left] || 0
-          # new_count[right] = new_right + existing_right + count
-          new_count[right] = new_right + count
-          # new_count[left] = new_left + existing_left + count
-          new_count[left] = new_left + count
+          next_count[left] = (next_count[left] || 0) + count
+          next_count[right] = (next_count[right] || 0) + count
         end
       else
         new_stone_value = stone * 2024
-        existing_stone = new_count[new_stone_value] || 0
-        new_count[new_stone_value] = existing_stone + count
+        next_count[new_stone_value] = (next_count[new_stone_value] || 0) + count
       end
     end
   end
-  new_count
+  next_count
 end
-
