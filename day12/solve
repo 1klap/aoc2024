@@ -1,0 +1,192 @@
+#!/usr/bin/env ruby
+
+require_relative '../cmd_line_helper'
+
+END {
+  part1_fun = ->(input_path) { part1(input_path) }
+  part2_fun = ->(input_path) { part2(input_path) }
+  run part1_fun, part2_fun
+}
+
+def closed_patches(squares_by_symbol)
+  closed_patches = {}
+  squares_by_symbol.each do |symbol, squares|
+    p "####### SYMBOL: #{symbol}"
+    patches_for_symbol = []
+    until squares.empty?
+      if patches_for_symbol.empty?
+        patches_for_symbol << { squares: [squares.shift], open: true }
+        next
+      end
+      grew_patches = grow_patches(patches_for_symbol, squares)
+      # p "grew_patches: #{grew_patches}"
+      if !grew_patches
+        p "======= patches not growing: #{patches_for_symbol}"
+        closed_patches[symbol] = patches_for_symbol
+        # p "closed_patches: #{closed_patches}"
+        p "!!!!!!!!! Squares left: #{squares}" if !squares.empty?
+        break
+      end
+    end
+    closed_patches[symbol] = patches_for_symbol
+  end
+  closed_patches
+end
+
+def part1(input_path)
+  puts "Part 1 for file: #{input_path}"
+  input = File.read(input_path)
+  grid = input.split("\n").map { |l| l.chars }
+  squares_by_symbol = grid.flat_map.with_index do |row, y|
+    row.map.with_index do |cell, x|
+      { x: x, y: y, symbol: cell }
+    end
+  end.group_by { |patch| patch[:symbol] }
+  # p "patches_by_symbol: #{squares_by_symbol}"
+  closed_patches = closed_patches(squares_by_symbol)
+  # p "closed_patches: #{closed_patches}"
+  print_patches(closed_patches)
+  cost = 0
+  closed_patches.each do |symbol, patches|
+    patches.each do |patch|
+      perimeter = perimeter_for_patch(patch)
+      cost_per_patch = perimeter * patch[:squares].size
+      p "cost_per_patch: #{cost_per_patch}, perimeter: #{perimeter}, size: #{patch[:squares].size}, patch: #{patch}"
+      cost += cost_per_patch
+    end
+  end
+  res = cost
+  puts "Answer Part 1: #{res}"
+end
+
+def perimeter_for_patch(patch)
+  patch[:squares].map { |s| perimeter_for_square(s, patch[:squares]) }.sum
+end
+
+def perimeter_for_square(square, squares)
+  x = square[:x]
+  y = square[:y]
+  res = (squares.any? { |s| s[:x] == x - 1 && s[:y] == y } ? 0 : 1) +
+    (squares.any? { |s| s[:x] == x + 1 && s[:y] == y } ? 0 : 1) +
+    (squares.any? { |s| s[:x] == x && s[:y] == y - 1 } ? 0 : 1) +
+    (squares.any? { |s| s[:x] == x && s[:y] == y + 1 } ? 0 : 1)
+  # p "perimeter_for_square: #{square} => #{res}"
+  res
+end
+
+def print_patches(patches)
+  patches.each do |symbol, patches|
+    p "Symbol: #{symbol}"
+    patches.each do |patch|
+      p "Patch: #{patch[:squares].map { |s| [s[:x], s[:y]] }}"
+    end
+  end
+end
+
+def grow_patches(patches, squares)
+  # p "grow_patches start: patches: #{patches}, squares: #{squares}"
+  patches.select { |p| p[:open] }.each do |open_patch|
+    # patch_has_grown = false
+    squares.each do |square|
+      if patch_can_reach_square?(open_patch, square)
+        open_patch[:squares] << square
+        # p "adding square #{square} to patch: #{open_patch}"
+        squares.delete(square)
+        return true
+        # patch_has_grown = true
+      end
+    end
+    # if patch_has_grown
+    #   return
+    # else
+    # p "patch did not grow: #{open_patch}"
+    open_patch[:open] = false
+    if squares.empty?
+      return false
+    else
+      patches << { squares: [squares.shift], open: true }
+    end
+    # end
+  end
+  true
+end
+
+def patch_can_reach_square?(patch, square)
+  patch[:squares].any? do |patch_square|
+    (patch_square[:x] - square[:x]).abs + (patch_square[:y] - square[:y]).abs == 1
+  end
+end
+
+def part2(input_path)
+  puts "Part 2 for file: #{input_path}"
+  input = File.read(input_path)
+  grid = input.split("\n").map { |l| l.chars }
+  squares_by_symbol = grid.flat_map.with_index do |row, y|
+    row.map.with_index do |cell, x|
+      { x: x, y: y, symbol: cell }
+    end
+  end.group_by { |patch| patch[:symbol] }
+  # p "patches_by_symbol: #{squares_by_symbol}"
+  closed_patches = closed_patches(squares_by_symbol)
+  cost = 0
+  closed_patches.each do |symbol, patches|
+    patches.each do |patch|
+      sides = sides_for_patch(patch)
+      cost_per_patch = sides * patch[:squares].size
+      p "cost_per_patch: #{cost_per_patch}, sides: #{sides}, size: #{patch[:squares].size}, patch: #{patch}"
+      cost += cost_per_patch
+    end
+  end
+  res = cost
+  puts "Answer Part 2: #{res}"
+end
+
+def sides_for_patch(patch)
+  top_border_squares = patch[:squares].select { |s| has_border?(s, patch[:squares], :top) }
+  gtbs = top_border_squares.group_by { |s| s[:y] }
+  p "gtbs: #{gtbs}"
+  top_sides = gtbs.map do |y, squares|
+    count_continous squares.map { |s| s[:x] }
+  end.sum
+  bottom_border_squares = patch[:squares].select { |s| has_border?(s, patch[:squares], :bottom) }
+  gbbs = bottom_border_squares.group_by { |s| s[:y] }
+  p "gbbs: #{gbbs}"
+  bottom_sides = gbbs.map do |y, squares|
+    count_continous squares.map { |s| s[:x] }
+  end.sum
+  left_border_squares = patch[:squares].select { |s| has_border?(s, patch[:squares], :left) }
+  glbs = left_border_squares.group_by { |s| s[:x] }
+  p "glbs: #{glbs}"
+  left_sides = glbs.map do |x, squares|
+    count_continous squares.map { |s| s[:y] }
+  end.sum
+  right_border_squares = patch[:squares].select { |s| has_border?(s, patch[:squares], :right) }
+  grbs = right_border_squares.group_by { |s| s[:x] }
+  p "grbs: #{grbs}"
+  right_sides = grbs.map do |x, squares|
+    count_continous squares.map { |s| s[:y] }
+  end.sum
+  top_sides + bottom_sides + left_sides + right_sides
+end
+
+def has_border?(square, squares, direction)
+  x = square[:x]
+  y = square[:y]
+  case direction
+  when :left
+    squares.none? { |s| s[:x] == x - 1 && s[:y] == y }
+  when :right
+    squares.none? { |s| s[:x] == x + 1 && s[:y] == y }
+  when :top
+    squares.none? { |s| s[:x] == x && s[:y] == y - 1 }
+  when :bottom
+    squares.none? { |s| s[:x] == x && s[:y] == y + 1 }
+  end
+end
+
+def count_continous(arr)
+  res = arr.sort.chunk_while { |i, j| i + 1 == j }.count
+  p "count_continous: arr=#{arr} res=#{res}"
+  res
+end
+
