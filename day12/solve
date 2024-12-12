@@ -8,185 +8,127 @@ END {
   run part1_fun, part2_fun
 }
 
-def closed_patches(squares_by_symbol)
+def part1(input_path)
+  puts "Part 1 for file: #{input_path}"
+  input = File.read(input_path)
+  grid = input.split("\n").map(&:chars)
+  positions_by_symbol = positions_for_symbol(grid)
+  closed_patches_by_symbol = closed_patches(positions_by_symbol)
+  res = closed_patches_by_symbol.values.map do |patches|
+    patches.map do |patch|
+      perimeter_for_patch(patch) * patch[:positions].size
+    end.sum
+  end.sum
+  puts "Answer Part 1: #{res}"
+end
+
+def positions_for_symbol(grid)
+  positions_by_symbol = {}
+  grid.each_with_index do |row, y|
+    row.each_with_index do |cell, x|
+      positions_by_symbol[cell] ||= []
+      positions_by_symbol[cell] << [x, y]
+    end
+  end
+  positions_by_symbol
+end
+
+def closed_patches(positions_by_symbol)
   closed_patches = {}
-  squares_by_symbol.each do |symbol, squares|
-    p "####### SYMBOL: #{symbol}"
+  positions_by_symbol.each do |symbol, unclaimed_postion|
+    # p "SYMBOL: #{symbol}"
     patches_for_symbol = []
-    until squares.empty?
-      if patches_for_symbol.empty?
-        patches_for_symbol << { squares: [squares.shift], open: true }
-        next
-      end
-      grew_patches = grow_patches(patches_for_symbol, squares)
-      # p "grew_patches: #{grew_patches}"
-      if !grew_patches
-        p "======= patches not growing: #{patches_for_symbol}"
-        closed_patches[symbol] = patches_for_symbol
-        # p "closed_patches: #{closed_patches}"
-        p "!!!!!!!!! Squares left: #{squares}" if !squares.empty?
-        break
-      end
+    until unclaimed_postion.empty?
+      grow_patch_or_add_new_one(patches_for_symbol, unclaimed_postion)
     end
     closed_patches[symbol] = patches_for_symbol
   end
   closed_patches
 end
 
-def part1(input_path)
-  puts "Part 1 for file: #{input_path}"
-  input = File.read(input_path)
-  grid = input.split("\n").map { |l| l.chars }
-  squares_by_symbol = grid.flat_map.with_index do |row, y|
-    row.map.with_index do |cell, x|
-      { x: x, y: y, symbol: cell }
+def grow_patch_or_add_new_one(patches, unclaimed_positions)
+  grew_any_patch = patches.select { |p| p[:open] }.any? do |open_patch|
+    grew_patch = unclaimed_positions.any? do |position|
+      if patch_can_reach_position?(open_patch, position)
+        open_patch[:positions] << position
+        unclaimed_positions.delete(position)
+        true
+      else
+        false
+      end
     end
-  end.group_by { |patch| patch[:symbol] }
-  # p "patches_by_symbol: #{squares_by_symbol}"
-  closed_patches = closed_patches(squares_by_symbol)
-  # p "closed_patches: #{closed_patches}"
-  print_patches(closed_patches)
-  cost = 0
-  closed_patches.each do |symbol, patches|
-    patches.each do |patch|
-      perimeter = perimeter_for_patch(patch)
-      cost_per_patch = perimeter * patch[:squares].size
-      p "cost_per_patch: #{cost_per_patch}, perimeter: #{perimeter}, size: #{patch[:squares].size}, patch: #{patch}"
-      cost += cost_per_patch
-    end
+    open_patch[:open] = false unless grew_patch
+    grew_patch
   end
-  res = cost
-  puts "Answer Part 1: #{res}"
+  patches << { positions: [unclaimed_positions.shift], open: true } unless grew_any_patch
+end
+
+def patch_can_reach_position?(patch, position)
+  patch[:positions].any? do |patch_position|
+    (patch_position[0] - position[0]).abs + (patch_position[1] - position[1]).abs == 1
+  end
 end
 
 def perimeter_for_patch(patch)
-  patch[:squares].map { |s| perimeter_for_square(s, patch[:squares]) }.sum
+  patch[:positions].map { |s| perimeter_for_position(s, patch[:positions]) }.sum
 end
 
-def perimeter_for_square(square, squares)
-  x = square[:x]
-  y = square[:y]
-  res = (squares.any? { |s| s[:x] == x - 1 && s[:y] == y } ? 0 : 1) +
-    (squares.any? { |s| s[:x] == x + 1 && s[:y] == y } ? 0 : 1) +
-    (squares.any? { |s| s[:x] == x && s[:y] == y - 1 } ? 0 : 1) +
-    (squares.any? { |s| s[:x] == x && s[:y] == y + 1 } ? 0 : 1)
-  # p "perimeter_for_square: #{square} => #{res}"
-  res
-end
+def perimeter_for_position(position, positions)
+  x = position[0]
+  y = position[1]
+  (positions.any? { |s| s[0] == x - 1 && s[1] == y } ? 0 : 1) +
+    (positions.any? { |s| s[0] == x + 1 && s[1] == y } ? 0 : 1) +
+    (positions.any? { |s| s[0] == x && s[1] == y - 1 } ? 0 : 1) +
+    (positions.any? { |s| s[0] == x && s[1] == y + 1 } ? 0 : 1)
 
-def print_patches(patches)
-  patches.each do |symbol, patches|
-    p "Symbol: #{symbol}"
-    patches.each do |patch|
-      p "Patch: #{patch[:squares].map { |s| [s[:x], s[:y]] }}"
-    end
-  end
-end
-
-def grow_patches(patches, squares)
-  # p "grow_patches start: patches: #{patches}, squares: #{squares}"
-  patches.select { |p| p[:open] }.each do |open_patch|
-    # patch_has_grown = false
-    squares.each do |square|
-      if patch_can_reach_square?(open_patch, square)
-        open_patch[:squares] << square
-        # p "adding square #{square} to patch: #{open_patch}"
-        squares.delete(square)
-        return true
-        # patch_has_grown = true
-      end
-    end
-    # if patch_has_grown
-    #   return
-    # else
-    # p "patch did not grow: #{open_patch}"
-    open_patch[:open] = false
-    if squares.empty?
-      return false
-    else
-      patches << { squares: [squares.shift], open: true }
-    end
-    # end
-  end
-  true
-end
-
-def patch_can_reach_square?(patch, square)
-  patch[:squares].any? do |patch_square|
-    (patch_square[:x] - square[:x]).abs + (patch_square[:y] - square[:y]).abs == 1
-  end
 end
 
 def part2(input_path)
   puts "Part 2 for file: #{input_path}"
   input = File.read(input_path)
-  grid = input.split("\n").map { |l| l.chars }
-  squares_by_symbol = grid.flat_map.with_index do |row, y|
-    row.map.with_index do |cell, x|
-      { x: x, y: y, symbol: cell }
-    end
-  end.group_by { |patch| patch[:symbol] }
-  # p "patches_by_symbol: #{squares_by_symbol}"
-  closed_patches = closed_patches(squares_by_symbol)
-  cost = 0
-  closed_patches.each do |symbol, patches|
-    patches.each do |patch|
-      sides = sides_for_patch(patch)
-      cost_per_patch = sides * patch[:squares].size
-      p "cost_per_patch: #{cost_per_patch}, sides: #{sides}, size: #{patch[:squares].size}, patch: #{patch}"
-      cost += cost_per_patch
-    end
-  end
-  res = cost
+  grid = input.split("\n").map(&:chars)
+  positions_by_symbol = positions_for_symbol(grid)
+  closed_patches_by_symbol = closed_patches(positions_by_symbol)
+  res = closed_patches_by_symbol.values.map do |patches|
+    patches.map do |patch|
+      sides_for_patch(patch) * patch[:positions].size
+    end.sum
+  end.sum
   puts "Answer Part 2: #{res}"
 end
 
 def sides_for_patch(patch)
-  top_border_squares = patch[:squares].select { |s| has_border?(s, patch[:squares], :top) }
-  gtbs = top_border_squares.group_by { |s| s[:y] }
-  p "gtbs: #{gtbs}"
-  top_sides = gtbs.map do |y, squares|
-    count_continous squares.map { |s| s[:x] }
+  sides = [{ direction: :top, group_coord_index: 1, chunk_coord_index: 0 },
+           { direction: :bottom, group_coord_index: 1, chunk_coord_index: 0 },
+           { direction: :left, group_coord_index: 0, chunk_coord_index: 1 },
+           { direction: :right, group_coord_index: 0, chunk_coord_index: 1 }]
+  sides.map do |side|
+    patch[:positions].select { |s| has_border?(s, patch[:positions], side[:direction]) }
+                     .group_by { |s| s[side[:group_coord_index]] }
+                     .values
+                     .map { |positions| continous_chunk_count(positions.map { |s| s[side[:chunk_coord_index]] }) }
+                     .sum
   end.sum
-  bottom_border_squares = patch[:squares].select { |s| has_border?(s, patch[:squares], :bottom) }
-  gbbs = bottom_border_squares.group_by { |s| s[:y] }
-  p "gbbs: #{gbbs}"
-  bottom_sides = gbbs.map do |y, squares|
-    count_continous squares.map { |s| s[:x] }
-  end.sum
-  left_border_squares = patch[:squares].select { |s| has_border?(s, patch[:squares], :left) }
-  glbs = left_border_squares.group_by { |s| s[:x] }
-  p "glbs: #{glbs}"
-  left_sides = glbs.map do |x, squares|
-    count_continous squares.map { |s| s[:y] }
-  end.sum
-  right_border_squares = patch[:squares].select { |s| has_border?(s, patch[:squares], :right) }
-  grbs = right_border_squares.group_by { |s| s[:x] }
-  p "grbs: #{grbs}"
-  right_sides = grbs.map do |x, squares|
-    count_continous squares.map { |s| s[:y] }
-  end.sum
-  top_sides + bottom_sides + left_sides + right_sides
 end
 
-def has_border?(square, squares, direction)
-  x = square[:x]
-  y = square[:y]
+def has_border?(position, positions, direction)
+  x = position[0]
+  y = position[1]
   case direction
   when :left
-    squares.none? { |s| s[:x] == x - 1 && s[:y] == y }
+    positions.none? { |s| s[0] == x - 1 && s[1] == y }
   when :right
-    squares.none? { |s| s[:x] == x + 1 && s[:y] == y }
+    positions.none? { |s| s[0] == x + 1 && s[1] == y }
   when :top
-    squares.none? { |s| s[:x] == x && s[:y] == y - 1 }
+    positions.none? { |s| s[0] == x && s[1] == y - 1 }
   when :bottom
-    squares.none? { |s| s[:x] == x && s[:y] == y + 1 }
+    positions.none? { |s| s[0] == x && s[1] == y + 1 }
+  else
+    false
   end
 end
 
-def count_continous(arr)
-  res = arr.sort.chunk_while { |i, j| i + 1 == j }.count
-  p "count_continous: arr=#{arr} res=#{res}"
-  res
+def continous_chunk_count(array)
+  array.sort.chunk_while { |i, j| i + 1 == j }.count
 end
 
