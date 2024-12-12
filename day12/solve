@@ -35,11 +35,11 @@ end
 
 def closed_patches(positions_by_symbol)
   closed_patches = {}
-  positions_by_symbol.each do |symbol, unclaimed_postion|
+  positions_by_symbol.each do |symbol, unclaimed_postions|
     # p "SYMBOL: #{symbol}"
     patches_for_symbol = []
-    until unclaimed_postion.empty?
-      grow_patch_or_add_new_one(patches_for_symbol, unclaimed_postion)
+    until unclaimed_postions.empty?
+      grow_patch_or_add_new_one(patches_for_symbol, unclaimed_postions)
     end
     closed_patches[symbol] = patches_for_symbol
   end
