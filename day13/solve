@@ -1,0 +1,67 @@
+#!/usr/bin/env ruby
+
+require_relative '../cmd_line_helper'
+
+END {
+  part1_fun = ->(input_path) { part1(input_path) }
+  part2_fun = ->(input_path) { part2(input_path) }
+  run part1_fun, part2_fun
+}
+
+def part1(input_path)
+  puts "Part 1 for file: #{input_path}"
+  input = File.read(input_path)
+  matrices = parse_matrices(input)
+  token_costs = matrices.map do |m|
+    s = find_whole_number_solution(m)
+    s ? 3 * s[0] + 1 * s[1] : 0
+  end
+  res = token_costs.sum
+  puts "Answer Part 1: #{res}"
+end
+
+def parse_matrices(input)
+  input.split("\n\n").map do |block|
+    lines = block.split("\n")
+    m0 = lines[0].match /Button A: X\+(\d+), Y\+(\d+)/
+    m1 = lines[1].match /Button B: X\+(\d+), Y\+(\d+)/
+    m2 = lines[2].match /Prize: X=(\d+), Y=(\d+)/
+    [
+      [m0[1].to_i, m1[1].to_i, m2[1].to_i],
+      [m0[2].to_i, m1[2].to_i, m2[2].to_i]
+    ]
+  end
+end
+
+def find_whole_number_solution(m)
+  det = m[0][0] * m[1][1] - m[0][1] * m[1][0]
+  m_prime = [
+    [m[1][1], -m[0][1]],
+    [-m[1][0], m[0][0]]
+  ]
+  m_product = [
+    m_prime[0].map.with_index { |v, i| v * m[i][2] }.sum,
+    m_prime[1].map.with_index { |v, i| v * m[i][2] }.sum
+  ]
+  if m_product[0] % det == 0 && m_product[1] % det == 0
+    m_product.map { |row| row / det }
+  else
+    nil
+  end
+end
+
+def part2(input_path)
+  puts "Part 2 for file: #{input_path}"
+  input = File.read(input_path)
+  matrices = parse_matrices input
+  matrices.each do |m|
+    m[0][2] += 10000000000000
+    m[1][2] += 10000000000000
+  end
+  token_costs = matrices.map do |m|
+    s = find_whole_number_solution(m)
+    s ? 3 * s[0] + 1 * s[1] : 0
+  end
+  res = token_costs.sum
+  puts "Answer Part 2: #{res}"
+end
