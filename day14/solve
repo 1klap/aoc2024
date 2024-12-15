@@ -1,0 +1,111 @@
+#!/usr/bin/env ruby
+
+require_relative '../cmd_line_helper'
+
+END {
+  part1_fun = ->(input_path) { part1(input_path) }
+  part2_fun = ->(input_path) { part2(input_path) }
+  run part1_fun, part2_fun
+}
+
+def tick(ps_and_vs, count, grid_width, grid_height)
+  ps_and_vs.each do |pv|
+    pv[:p][0] += (pv[:v][0] * count)
+    pv[:p][1] += (pv[:v][1] * count)
+    pv[:p][0] = pv[:p][0] % grid_width
+    pv[:p][1] = pv[:p][1] % grid_height
+  end
+end
+
+def draw_grid(ps_and_vs, grid_width, grid_height)
+  grid_height.times do |y|
+    grid_width.times do |x|
+      if ps_and_vs.any? { |pv| pv[:p][0] == x && pv[:p][1] == y }
+        print "#"
+      else
+        print "."
+      end
+    end
+    puts
+  end
+end
+
+def part1(input_path)
+  puts "Part 1 for file: #{input_path}"
+  input = File.read(input_path)
+  ps_and_vs = input.strip.split("\n")
+                   .map do |line|
+    s = line.split(" ")
+    p = s[0].split("=")[1].split(",").map(&:to_i)
+    v = s[1].split("=")[1].split(",").map(&:to_i)
+    { p: p, v: v }
+  end
+  # p "ps_and_vs: #{ps_and_vs}"
+  grid_width = input_path == "data/ex1.txt" ? 11 : 101
+  grid_height = input_path == "data/ex1.txt" ? 7 : 103
+  tick ps_and_vs, 100, grid_width, grid_height
+  p "ps_and_vs: #{ps_and_vs}"
+  draw_grid ps_and_vs, grid_width, grid_height
+  half_height = grid_height / 2
+  half_width = grid_width / 2
+  q1_count = ps_and_vs.select { |pv| pv[:p][0] < half_width && pv[:p][1] < half_height }.count
+  q2_count = ps_and_vs.select { |pv| pv[:p][0] < half_width && pv[:p][1] > half_height }.count
+  q3_count = ps_and_vs.select { |pv| pv[:p][0] > half_width && pv[:p][1] < half_height }.count
+  q4_count = ps_and_vs.select { |pv| pv[:p][0] > half_width && pv[:p][1] > half_height }.count
+  cross_count = ps_and_vs.select { |pv| pv[:p][0] == half_width || pv[:p][1] == half_height }.count
+  p "q1_count: #{q1_count}"
+  p "q2_count: #{q2_count}"
+  p "q3_count: #{q3_count}"
+  p "q4_count: #{q4_count}"
+  p "cross_count: #{cross_count}"
+  p "sum: #{q1_count + q2_count + q3_count + q4_count + cross_count}"
+  res = q1_count * q2_count * q3_count * q4_count
+  puts "Answer Part 1: #{res}"
+end
+
+def part2(input_path)
+  puts "Part 2 for file: #{input_path}"
+  input = File.read(input_path)
+  ps_and_vs = input.strip.split("\n")
+                   .map do |line|
+    s = line.split(" ")
+    p = s[0].split("=")[1].split(",").map(&:to_i)
+    v = s[1].split("=")[1].split(",").map(&:to_i)
+    { p: p, v: v }
+  end
+  grid_width = input_path == "data/ex1.txt" ? 11 : 101
+  grid_height = input_path == "data/ex1.txt" ? 7 : 103
+
+  # 100_000.times do |i|
+  #   tick ps_and_vs, 1, grid_width, grid_height
+  #   print "#{i} " if i % 10 == 0
+  #   if spot_seq ps_and_vs, grid_width, grid_height
+  #     puts "cand: #{i}"
+  #     draw_grid ps_and_vs, grid_width, grid_height
+  #   end
+  # end
+  candidates = [604, 1325, 2649, 3179, 3457, 3591, 4930, 6372, 7093]
+  candidates.each do |candidate|
+    ps_and_vs_copy = Marshal.load(Marshal.dump(ps_and_vs)) # deep copy
+    tick ps_and_vs_copy, candidate, grid_width, grid_height
+    p "candidate: #{candidate}"
+    draw_grid ps_and_vs_copy, grid_width, grid_height
+  end
+  res = 7093
+  puts "Answer Part 2: #{res}"
+end
+
+def spot_seq(ps_and_vs, grid_width, grid_height)
+  grid_height.times do |y|
+    line = ""
+    grid_width.times do |x|
+      if ps_and_vs.any? { |pv| pv[:p][0] == x && pv[:p][1] == y }
+        line += "#"
+      else
+        line += "."
+      end
+    end
+    return true if line.include? "######"
+  end
+  false
+end
