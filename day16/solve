@@ -101,12 +101,178 @@ end
 
 def part2(input_path)
   puts "Part 2 for file: #{input_path}"
-  # _input = File.read(input_path)
-  # res = input.split("\n")
-  #              .map { |line|
-  #                # TODO: implement logic here
-  #              }.sum
-  res = 42
+  input = File.read(input_path)
+  grid = input.split("\n").map(&:chars)
+  positions = positions_for_symbol(grid, '.')
+  nodes = positions.map do |position|
+    { position: position, cost: nil, dir: nil }
+  end
+
+  # p "nodes: #{nodes}"
+  e = positions_for_symbol(grid, 'E').map { |position| { position: position, cost: nil, dir: nil } }.first
+  nodes << e
+  p "e: #{e}"
+  s = positions_for_symbol(grid, 'S').map { |position| { position: position, cost: 0, dir: :h } }.first
+  p "s: #{s}"
+  fringe = [s]
+  until fringe.empty?
+    current = fringe.shift
+    # p "current: #{current}"
+    # break if current == s
+    nodes.each do |node|
+      if node[:position][0] == current[:position][0] && node[:position][1] == current[:position][1] + 1
+        cost_to_node = if current[:dir] == :v
+                         current[:cost] + 1
+                       else
+                         current[:cost] + 1001
+                       end
+        if node[:cost].nil? || cost_to_node < node[:cost]
+          node[:cost] = cost_to_node
+          node[:dir] = :v
+          fringe << node unless fringe.include?(node) || node == e
+        end
+      elsif node[:position][0] == current[:position][0] && node[:position][1] == current[:position][1] - 1
+        cost_to_node = if current[:dir] == :v
+                         current[:cost] + 1
+                       else
+                         current[:cost] + 1001
+                       end
+        if node[:cost].nil? || cost_to_node < node[:cost]
+          node[:cost] = cost_to_node
+          node[:dir] = :v
+          fringe << node unless fringe.include?(node) || node == e
+        end
+      elsif node[:position][0] == current[:position][0] + 1 && node[:position][1] == current[:position][1]
+        cost_to_node = if current[:dir] == :h
+                         current[:cost] + 1
+                       else
+                         current[:cost] + 1001
+                       end
+        if node[:cost].nil? || cost_to_node < node[:cost]
+          node[:cost] = cost_to_node
+          node[:dir] = :h
+          fringe << node unless fringe.include?(node) || node == e
+        end
+      elsif node[:position][0] == current[:position][0] - 1 && node[:position][1] == current[:position][1]
+        cost_to_node = if current[:dir] == :h
+                         current[:cost] + 1
+                       else
+                         current[:cost] + 1001
+                       end
+        if node[:cost].nil? || cost_to_node < node[:cost]
+          node[:cost] = cost_to_node
+          node[:dir] = :h
+          fringe << node unless fringe.include?(node) || node == e
+        end
+      end
+    end
+  end
+
+  best_node_fringe = [s]
+  best_nodes = [s]
+  until best_node_fringe.empty?
+    current = best_node_fringe.shift
+    # p "current: #{current}"
+    # break if current == s
+    nodes.each do |node|
+      if node[:position][0] == current[:position][0] && node[:position][1] == current[:position][1] + 1
+        cost_to_node = if current[:dir] == :v
+                         current[:cost] + 1
+                       else
+                         current[:cost] + 1001
+                       end
+        if cost_to_node == node[:cost]
+          best_nodes << node unless best_nodes.include?(node)
+          best_node_fringe << node unless best_node_fringe.include?(node) || node == e
+        end
+      elsif node[:position][0] == current[:position][0] && node[:position][1] == current[:position][1] - 1
+        cost_to_node = if current[:dir] == :v
+                         current[:cost] + 1
+                       else
+                         current[:cost] + 1001
+                       end
+        if cost_to_node == node[:cost]
+          best_nodes << node unless best_nodes.include?(node)
+          best_node_fringe << node unless best_node_fringe.include?(node) || node == e
+        end
+      elsif node[:position][0] == current[:position][0] + 1 && node[:position][1] == current[:position][1]
+        cost_to_node = if current[:dir] == :h
+                         current[:cost] + 1
+                       else
+                         current[:cost] + 1001
+                       end
+        if cost_to_node == node[:cost]
+          best_nodes << node unless best_nodes.include?(node)
+          best_node_fringe << node unless best_node_fringe.include?(node) || node == e
+        end
+      elsif node[:position][0] == current[:position][0] - 1 && node[:position][1] == current[:position][1]
+        cost_to_node = if current[:dir] == :h
+                         current[:cost] + 1
+                       else
+                         current[:cost] + 1001
+                       end
+        if cost_to_node == node[:cost]
+          best_nodes << node unless best_nodes.include?(node)
+          best_node_fringe << node unless best_node_fringe.include?(node) || node == e
+        end
+      end
+    end
+  end
+  p "best_nodes: #{best_nodes}"
+  res = best_nodes.count
+
+  # best_nodes = []
+  # nodes.each do |node|
+  #   p "node: #{node}"
+  #   neightbouring_nodes = nodes.select do |n|
+  #     (n[:position][0] - node[:position][0]).abs + (n[:position][1] - node[:position][1]).abs == 1
+  #   end
+  #   neightbouring_nodes.each do |current|
+  #     p "current: #{current}"
+  #     if node[:position][0] == current[:position][0] && node[:position][1] == current[:position][1] + 1
+  #       cost_to_node = if current[:dir] == :v
+  #                        current[:cost] + 1
+  #                      else
+  #                        current[:cost] + 1001
+  #                      end
+  #       p "cost_to_node: #{cost_to_node}"
+  #       if cost_to_node == current[:cost]
+  #         best_nodes << node
+  #       end
+  #     elsif node[:position][0] == current[:position][0] && node[:position][1] == current[:position][1] - 1
+  #       cost_to_node = if current[:dir] == :v
+  #                        current[:cost] + 1
+  #                      else
+  #                        current[:cost] + 1001
+  #                      end
+  #       p "cost_to_node: #{cost_to_node}"
+  #       if cost_to_node == current[:cost]
+  #         best_nodes << node
+  #       end
+  #     elsif node[:position][0] == current[:position][0] + 1 && node[:position][1] == current[:position][1]
+  #       cost_to_node = if current[:dir] == :h
+  #                        current[:cost] + 1
+  #                      else
+  #                        current[:cost] + 1001
+  #                      end
+  #       p "cost_to_node: #{cost_to_node}"
+  #       if cost_to_node == current[:cost]
+  #         best_nodes << node
+  #       end
+  #     elsif node[:position][0] == current[:position][0] - 1 && node[:position][1] == current[:position][1]
+  #       cost_to_node = if current[:dir] == :h
+  #                        current[:cost] + 1
+  #                      else
+  #                        current[:cost] + 1001
+  #                      end
+  #       p "cost_to_node: #{cost_to_node}"
+  #       if cost_to_node == current[:cost]
+  #         best_nodes << node
+  #       end
+  #     end
+  #   end
+  # end
+  # res = best_nodes.uniq.count
   puts "Answer Part 2: #{res}"
 end
 
