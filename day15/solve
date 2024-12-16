@@ -14,7 +14,7 @@ def part1(input_path)
   s = input.split("\n\n")
   warehouse = parse_warehouse(s[0])
   moves = s[1].strip.gsub("\n", "").chars
-  draw_warehouse(warehouse)
+  # draw_warehouse(warehouse)
   moves.each do |move|
     process_move(warehouse, move)
     # draw_warehouse(warehouse)
@@ -61,7 +61,6 @@ def draw_warehouse(warehouse)
 end
 
 def process_move(wh, move)
-  p "move: #{move}"
   dx, dy = case move
            when '^'
              [0, -1]
@@ -93,10 +92,7 @@ def pushable_crates_in_direction(wh, dx, dy)
   if dx == -1
     limiting_wall_position = wh[:walls].select { |wall| wall[1] == wh[:current][1] && wall[0] < wh[:current][0] }.map { |wall| wall[0] }.max
     crates = wh[:crates].select { |crate| crate[1] == wh[:current][1] && crate[0] < wh[:current][0] && crate[0] > limiting_wall_position }.sort_by { |crate| -crate[0] }
-    # crates_until_first_gap = crates.take_while { |crate| !wh[:walls].include?([crate[0] - 1, crate[1]]) && !wh[:crates].include?([crate[0] - 1, crate[1]) }
     chunks = crates.chunk_while { |i, j| i[0] - 1 == j[0] }.to_a
-    p "limiting_wall_position: #{limiting_wall_position} crates: #{crates}"
-    p "chunks: #{chunks}"
     if chunks.first.map { |e| e[0] }.min > (limiting_wall_position + 1)
       return chunks.first
     else
@@ -106,8 +102,6 @@ def pushable_crates_in_direction(wh, dx, dy)
     limiting_wall_position = wh[:walls].select { |wall| wall[1] == wh[:current][1] && wall[0] > wh[:current][0] }.map { |wall| wall[0] }.min
     crates = wh[:crates].select { |crate| crate[1] == wh[:current][1] && crate[0] > wh[:current][0] && crate[0] < limiting_wall_position }.sort_by { |crate| crate[0] }
     chunks = crates.chunk_while { |i, j| i[0] + 1 == j[0] }.to_a
-    p "limiting_wall_position: #{limiting_wall_position} crates: #{crates}"
-    p "chunks: #{chunks}"
     if chunks.first.map { |e| e[0] }.max < (limiting_wall_position - 1)
       return chunks.first
     else
@@ -117,8 +111,6 @@ def pushable_crates_in_direction(wh, dx, dy)
     limiting_wall_position = wh[:walls].select { |wall| wall[0] == wh[:current][0] && wall[1] < wh[:current][1] }.map { |wall| wall[1] }.max
     crates = wh[:crates].select { |crate| crate[0] == wh[:current][0] && crate[1] < wh[:current][1] && crate[1] > limiting_wall_position }.sort_by { |crate| -crate[1] }
     chunks = crates.chunk_while { |i, j| i[1] - 1 == j[1] }.to_a
-    p "limiting_wall_position: #{limiting_wall_position} crates: #{crates}"
-    p "chunks: #{chunks}"
     if chunks.first.map { |e| e[1] }.min > (limiting_wall_position + 1)
       return chunks.first
     else
@@ -128,8 +120,6 @@ def pushable_crates_in_direction(wh, dx, dy)
     limiting_wall_position = wh[:walls].select { |wall| wall[0] == wh[:current][0] && wall[1] > wh[:current][1] }.map { |wall| wall[1] }.min
     crates = wh[:crates].select { |crate| crate[0] == wh[:current][0] && crate[1] > wh[:current][1] && crate[1] < limiting_wall_position }.sort_by { |crate| crate[1] }
     chunks = crates.chunk_while { |i, j| i[1] + 1 == j[1] }.to_a
-    p "limiting_wall_position: #{limiting_wall_position} crates: #{crates}"
-    p "chunks: #{chunks}"
     if chunks.first.map { |e| e[1] }.max < (limiting_wall_position - 1)
       return chunks.first
     else
@@ -142,8 +132,6 @@ def gps(wh)
   wh[:crates].map { |crate| crate[1] * 100 + crate[0] }.sum
 end
 
-require "readline"
-
 def part2(input_path)
   puts "Part 2 for file: #{input_path}"
   input = File.read(input_path)
@@ -151,24 +139,14 @@ def part2(input_path)
   warehouse = parse_warehouse(s[0])
   moves = s[1].strip.gsub("\n", "").chars
   scaled_warehouse = scale_warehouse(warehouse)
-  p "number of crates: #{scaled_warehouse[:crates].size}"
-  p "number of moves: #{moves.size}"
   # draw_scaled_warehouse(scaled_warehouse)
   moves.each_with_index do |move, i|
     process_scaled_move(scaled_warehouse, move)
     # draw_scaled_warehouse(scaled_warehouse, move, i)
-    # Readline.readline
     # sleep 0.05
   end
-  p "number of crates: #{scaled_warehouse[:crates].size}"
-  grouped_crates_by_pos = scaled_warehouse[:crates].group_by { |c| "#{c[0]}:#{c[1]}" }
-  p "grouped crates: #{grouped_crates_by_pos}"
-  p "grouped crates size: #{grouped_crates_by_pos.size}"
-  p "overlap: #{grouped_crates_by_pos.select { |_, v| v.size > 1 }}"
-  res = gps_scaled(scaled_warehouse).sum
+  res = gps(scaled_warehouse)
   puts "Answer Part 2: #{res}"
-  # 1480654 too low
-  # 1500844 too high
 end
 
 def scale_warehouse(warehouse)
@@ -192,36 +170,23 @@ def draw_scaled_warehouse(warehouse, move = nil, i = nil)
   (0..height).each do |y|
     (0..width).each do |x|
       if warehouse[:current] == [x, y]
-        # print '@'
-        if move
-          buff += move
-        else
-          buff += '@'
-        end
+        buff += move ? move : '@'
       elsif warehouse[:walls].include?([x, y])
-        # print '#'
         buff += '#'
       elsif warehouse[:crates].include?([x, y])
-        # print '['
         buff += '['
       elsif warehouse[:crates].include?([x - 1, y])
-        # print ']'
         buff += ']'
       else
-        # print '.'
         buff += '.'
       end
     end
-    # puts
     buff += "\n"
   end
-  # puts
-  puts buff
   print buff
 end
 
 def process_scaled_move(wh, move)
-  # p "move: #{move}"
   dx, dy = case move
            when '^'
              [0, -1]
@@ -234,7 +199,6 @@ def process_scaled_move(wh, move)
            end
   x, y = wh[:current]
   new_x, new_y = x + dx, y + dy
-  # p "new_x: #{new_x} new_y: #{new_y} wh[:current]: #{wh[:current]} wh[:crates]: #{wh[:crates]}"
   if wh[:walls].include?([new_x, new_y])
     return
   end
@@ -252,10 +216,8 @@ def process_scaled_move(wh, move)
       false
     end
   end
-  # p  "touching_crate: #{touching_crate}"
   if touching_crate.any?
     if can_push_crate?(wh, touching_crate.first, dx, dy)
-      # p "can push crate"
       push_crate(wh, touching_crate.first, dx, dy)
     else
       return
@@ -273,14 +235,6 @@ def can_push_crate?(wh, crate, dx, dy)
       !can_push_crate? wh, c, dx, dy
     end
     return !cant_move_all
-    # limiting_wall_position = wh[:walls].select { |wall| wall[1] == crate[1] && wall[0] < crate[0] }.map { |wall| wall[0] }.max
-    # crates = wh[:crates].select { |c| c[1] == crate[1] && c[0] <= crate[0] && c[0] > limiting_wall_position }.sort_by { |c| -c[0] }
-    # chunks = crates.chunk_while { |i, j| i[0] - 2 == j[0] }.to_a
-    # if chunks.first.map { |e| e[0] }.min > (limiting_wall_position + 1)
-    #   return true
-    # else
-    #   return false
-    # end
   elsif dx == 1
     if wh[:walls].include?([crate[0] + 2, crate[1]])
       return false
@@ -310,23 +264,10 @@ end
 
 def connected_crates(wh, crate, dx, dy)
   if dx == -1
-    # limiting_wall_position = wh[:walls].select { |wall| wall[1] == crate[1] && wall[0] < crate[0] }.map { |wall| wall[0] }.max
-    # crates = wh[:crates].select { |c| c[1] == crate[1] && c[0] < crate[0] && c[0] > limiting_wall_position }.sort_by { |c| -c[0] }
-    # if chunks.first.map { |e| e[0] }.min > (limiting_wall_position + 1)
-    #   return chunks.first
-    # else
-    #   return []
-    # end
-
-    # crates = wh[:crates].select { |c| c[1] == crate[1] && c[0] < crate[0] }.sort_by { |c| -c[0] }
-    # chunks = crates.chunk_while { |i, j| i[0] - 2 == j[0] }.to_a
-    # return [] if chunks.empty?
-    # return chunks.first
     left_crate = wh[:crates].select { |c| c[1] == crate[1] && c[0] == crate[0] - 2 }
     if left_crate.empty?
       return []
     else
-      # raise if left_crate.size > 1
       return left_crate + connected_crates(wh, left_crate.first, dx, dy)
     end
   elsif dx == 1
@@ -334,7 +275,6 @@ def connected_crates(wh, crate, dx, dy)
     if right_crate.empty?
       return []
     else
-      # raise if right_crate.size > 1
       return right_crate + connected_crates(wh, right_crate.first, dx, dy)
     end
   elsif dy == -1
@@ -363,107 +303,10 @@ def connected_crates(wh, crate, dx, dy)
 end
 
 def push_crate(wh, crate, dx, dy)
-  if dx == -1
-    connected_crates(wh, crate, dx, dy).each do |c|
-      c[0] -= 1
-    end
-    crate[0] -= 1
-    # limiting_wall_position = wh[:walls].select { |wall| wall[1] == crate[1] && wall[0] < crate[0] }.map { |wall| wall[0] }.max
-    # crates = wh[:crates].select { |c| c[1] == crate[1] && c[0] <= crate[0] && c[0] > limiting_wall_position }.sort_by { |c| -c[0] }
-    # chunks = crates.chunk_while { |i, j| i[0] - 2 == j[0] }.to_a
-    # if chunks.first.map { |e| e[0] }.min > (limiting_wall_position + 1)
-    #   chunks.first.each do |c|
-    #     c[0] -= 1
-    #   end
-    # end
-  elsif dx == 1
-    connected_crates(wh, crate, dx, dy).each do |c|
-      c[0] += 1
-    end
-    crate[0] += 1
-  elsif dy == -1
-    connected_crates(wh, crate, dx, dy).each do |c|
-      c[1] -= 1
-    end
-    crate[1] -= 1
-  elsif dy == 1
-    connected_crates(wh, crate, dx, dy).each do |c|
-      c[1] += 1
-    end
-    crate[1] += 1
+  connected_crates(wh, crate, dx, dy).each do |c|
+    c[0] += dx
+    c[1] += dy
   end
-end
-
-def pushable_scaled_crates_in_direction(wh, dx, dy)
-  if dx == -0.5
-    limiting_wall_position = wh[:walls].select { |wall| wall[1] == wh[:current][1] && wall[0] < wh[:current][0] }.map { |wall| wall[0] }.max
-    crates = wh[:crates].select { |crate| crate[1] == wh[:current][1] && crate[0] < wh[:current][0] && crate[0] > limiting_wall_position }.sort_by { |crate| -crate[0] }
-    # crates_until_first_gap = crates.take_while { |crate| !wh[:walls].include?([crate[0] - 1, crate[1]]) && !wh[:crates].include?([crate[0] - 1, crate[1]) }
-    chunks = crates.chunk_while { |i, j| i[0] - 1 == j[0] }.to_a
-    p "limiting_wall_position: #{limiting_wall_position} crates: #{crates}"
-    p "chunks: #{chunks}"
-    if chunks.first.map { |e| e[0] }.min > (limiting_wall_position + 0.5)
-      return chunks.first
-    else
-      return []
-    end
-  elsif dx == 0.5
-    limiting_wall_position = wh[:walls].select { |wall| wall[1] == wh[:current][1] && wall[0] > wh[:current][0] }.map { |wall| wall[0] }.min
-    crates = wh[:crates].select { |crate| crate[1] == wh[:current][1] && crate[0] > wh[:current][0] && crate[0] < limiting_wall_position }.sort_by { |crate| crate[0] }
-    chunks = crates.chunk_while { |i, j| i[0] + 1 == j[0] }.to_a
-    p "limiting_wall_position: #{limiting_wall_position} crates: #{crates}"
-    p "chunks: #{chunks}"
-    if chunks.first.map { |e| e[0] }.max < (limiting_wall_position - 0.5)
-      return chunks.first
-    else
-      return []
-    end
-  elsif dy == -1
-    limiting_wall_position = wh[:walls].select { |wall|
-      (wall[0] == (wh[:current][0].div 1) ||
-        wall[0] == (wh[:current][0].div 1)) &&
-        wall[1] < wh[:current][1]
-    }.map { |wall| wall[1] }.max
-    crates = wh[:crates].select do |crate|
-      (crate[0] == wh[:current][0] || crate[0] == wh[:current][0] - 0.5 || crate[0] == wh[:current][0] + 0.5) &&
-        crate[1] < wh[:current][1] && crate[1] > limiting_wall_position
-    end.sort_by { |crate| -crate[1] }
-    chunks = crates.chunk_while { |i, j| (i[1] - 1 == j[1]) && (i[0] - j[0] < 1) }.to_a
-    p "limiting_wall_position: #{limiting_wall_position} crates: #{crates}"
-    p "chunks: #{chunks}"
-    if chunks.first.map { |e| e[1] }.min > (limiting_wall_position + 1)
-      return chunks.first
-    else
-      return []
-    end
-  elsif dy == 1
-    limiting_wall_position = wh[:walls].select { |wall| wall[0] == (wh[:current][0].div 1) && wall[1] > wh[:current][1] }.map { |wall| wall[1] }.min
-    crates = wh[:crates].select do |crate|
-      (crate[0] == wh[:current][0] || crate[0] == wh[:current][0] - 0.5 || crate[0] == wh[:current][0] + 0.5) &&
-        crate[1] > wh[:current][1] && crate[1] < limiting_wall_position
-    end.sort_by { |crate| crate[1] }
-    chunks = crates.chunk_while { |i, j| (i[1] + 1 == j[1]) && (i[0] - j[0] < 1) }.to_a
-    p "limiting_wall_position: #{limiting_wall_position} crates: #{crates}"
-    p "chunks: #{chunks}"
-    if chunks.first.map { |e| e[1] }.max < (limiting_wall_position - 1)
-      return chunks.first
-    else
-      return []
-    end
-  end
-end
-
-def gps_scaled(wh)
-  width = wh[:walls].map { |x, _| x }.max
-  # height = wh[:walls].map { |_, y| y }.max
-  wh[:crates].map do |crate|
-    # gps = if crate[0] > width / 2
-    #   crate[1] * 100 + (crate[0] + 1)
-    # else
-    #   crate[1] * 100 + crate[0]
-    # end
-    gps = crate[1] * 100 + crate[0]
-    # p "crate: #{crate} gps: #{gps}"
-    gps
-  end
+  crate[0] += dx
+  crate[1] += dy
 end
