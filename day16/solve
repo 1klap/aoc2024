@@ -1,0 +1,112 @@
+#!/usr/bin/env ruby
+
+require_relative '../cmd_line_helper'
+
+END {
+  part1_fun = ->(input_path) { part1(input_path) }
+  part2_fun = ->(input_path) { part2(input_path) }
+  run part1_fun, part2_fun
+}
+
+def part1(input_path)
+  puts "Part 1 for file: #{input_path}"
+  input = File.read(input_path)
+  grid = input.split("\n").map(&:chars)
+  positions = positions_for_symbol(grid, '.')
+  nodes = positions.map do |position|
+    { position: position, cost: nil, dir: nil }
+  end
+
+  # p "nodes: #{nodes}"
+  e = positions_for_symbol(grid, 'E').map { |position| { position: position, cost: nil, dir: nil } }.first
+  nodes << e
+  p "e: #{e}"
+  s = positions_for_symbol(grid, 'S').map { |position| { position: position, cost: 0, dir: :h } }.first
+  p "s: #{s}"
+  fringe = [s]
+  until fringe.empty?
+    current = fringe.shift
+    # p "current: #{current}"
+    # break if current == s
+    nodes.each do |node|
+      if node[:position][0] == current[:position][0] && node[:position][1] == current[:position][1] + 1
+        cost_to_node = if current[:dir] == :v
+                         current[:cost] + 1
+                       else
+                         current[:cost] + 1001
+                       end
+        if node[:cost].nil? || cost_to_node < node[:cost]
+          node[:cost] = cost_to_node
+          node[:dir] = :v
+          fringe << node unless fringe.include?(node) || node == e
+        end
+      elsif node[:position][0] == current[:position][0] && node[:position][1] == current[:position][1] - 1
+        cost_to_node = if current[:dir] == :v
+                         current[:cost] + 1
+                       else
+                         current[:cost] + 1001
+                       end
+        if node[:cost].nil? || cost_to_node < node[:cost]
+          node[:cost] = cost_to_node
+          node[:dir] = :v
+          fringe << node unless fringe.include?(node) || node == e
+        end
+      elsif node[:position][0] == current[:position][0] + 1 && node[:position][1] == current[:position][1]
+        cost_to_node = if current[:dir] == :h
+                         current[:cost] + 1
+                       else
+                         current[:cost] + 1001
+                       end
+        if node[:cost].nil? || cost_to_node < node[:cost]
+          node[:cost] = cost_to_node
+          node[:dir] = :h
+          fringe << node unless fringe.include?(node) || node == e
+        end
+      elsif node[:position][0] == current[:position][0] - 1 && node[:position][1] == current[:position][1]
+        cost_to_node = if current[:dir] == :h
+                         current[:cost] + 1
+                       else
+                         current[:cost] + 1001
+                       end
+        if node[:cost].nil? || cost_to_node < node[:cost]
+          node[:cost] = cost_to_node
+          node[:dir] = :h
+          fringe << node unless fringe.include?(node) || node == e
+        end
+      end
+    end
+  end
+  p "nodes: #{nodes}"
+  p "e: #{e}"
+  # p "n1: #{nodes.select { |node| node[:position] == [1, 12] }}"
+  # p "n2: #{nodes.select { |node| node[:position] == [1, 11] }}"
+  # p "n3: #{nodes.select { |node| node[:position] == [1, 10] }}"
+  # p "n4: #{nodes.select { |node| node[:position] == [1, 9] }}"
+  # p "n5: #{nodes.select { |node| node[:position] == [2, 9] }}"
+  # p "n6: #{nodes.select { |node| node[:position] == [3, 9] }}"
+  # p "n7: #{nodes.select { |node| node[:position] == [4, 9] }}"
+  res = e[:cost]
+  puts "Answer Part 1: #{res}"
+end
+
+def positions_for_symbol(grid, symbol)
+  positions = []
+  grid.each_with_index do |row, y|
+    row.each_with_index do |cell, x|
+      positions << [x, y] if cell == symbol
+    end
+  end
+  positions
+end
+
+def part2(input_path)
+  puts "Part 2 for file: #{input_path}"
+  # _input = File.read(input_path)
+  # res = input.split("\n")
+  #              .map { |line|
+  #                # TODO: implement logic here
+  #              }.sum
+  res = 42
+  puts "Answer Part 2: #{res}"
+end
+
