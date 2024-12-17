@@ -1,0 +1,186 @@
+#!/usr/bin/env ruby
+
+require_relative '../cmd_line_helper'
+
+END {
+  part1_fun = ->(input_path) { part1(input_path) }
+  part2_fun = ->(input_path) { part2(input_path) }
+  run part1_fun, part2_fun
+}
+
+def part1(input_path)
+  puts "Part 1 for file: #{input_path}"
+  input = File.read(input_path)
+  s = input.split("\n\n")
+  register_init_lines = s[0].split("\n")
+  init_a = register_init_lines[0].match(/Register A: (\d+)/)[1].to_i
+  init_b = register_init_lines[1].match(/Register B: (\d+)/)[1].to_i
+  init_c = register_init_lines[2].match(/Register C: (\d+)/)[1].to_i
+  program = s[1].split(": ")[1].split(',').map(&:to_i)
+  registers = [init_a, init_b, init_c]
+  # p "registers: #{registers} program: #{program}"
+  machine = { registers: registers, program: program, pointer: 0 }
+  out = execute_program(machine)
+  # p "final registers: #{machine[:registers]}"
+  res = out.join ','
+  puts "Answer Part 1: #{res}"
+end
+
+def execute_program(machine)
+  program = machine[:program]
+  pointer = machine[:pointer]
+  out = []
+
+  while pointer < machine[:program].length
+    # p "registers: #{machine[:registers]} pointer: #{pointer}"
+    instruction = program[pointer]
+    operand = program[pointer + 1]
+    case instruction
+    when 0
+      c_operand = combo_operand machine, operand
+      numerator = machine[:registers][0]
+      result = numerator / 2 ** c_operand
+      p "adv: #{numerator} / 2**#{c_operand} result: #{result}"
+      machine[:registers][0] = result
+    when 1
+      result = machine[:registers][1] ^ operand
+      p "bxl: #{machine[:registers][1]} ^ #{operand} result: #{result}"
+      machine[:registers][1] = result
+    when 2
+      c_operand = combo_operand machine, operand
+      result = c_operand % 8
+      p "bst: #{c_operand} % 8 result: #{result}"
+      machine[:registers][1] = result
+    when 3
+      p "jnz: #{machine[:registers][0]} != 0"
+      if machine[:registers][0] != 0
+        pointer = operand
+        next
+      end
+    when 4
+      result = machine[:registers][1] ^ machine[:registers][2]
+      p "bxc: #{machine[:registers][1]} ^ #{machine[:registers][2]} result: #{result}"
+      machine[:registers][1] = result
+    when 5
+      c_operand = combo_operand machine, operand
+      result = c_operand % 8
+      p "out: #{c_operand} % 8 result: #{result}"
+      out << result
+    when 6
+      c_operand = combo_operand machine, operand
+      numerator = machine[:registers][0]
+      result = numerator / 2 ** c_operand
+      p "bdv: #{numerator} / 2**#{c_operand} result: #{result}"
+      machine[:registers][1] = result
+    when 7
+      c_operand = combo_operand machine, operand
+      numerator = machine[:registers][0]
+      result = numerator / 2 ** c_operand
+      p "cdv: #{numerator} / 2**#{c_operand} result: #{result}"
+      machine[:registers][2] = result
+    end
+    pointer += 2
+  end
+  out
+end
+
+def combo_operand(machine, operand)
+  case operand
+  when 0, 1, 2, 3
+    operand
+  when 4
+    machine[:registers][0]
+  when 5
+    machine[:registers][1]
+  when 6
+    machine[:registers][2]
+  when 7
+    raise NotImplementedError
+  else
+    raise NotImplementedError
+  end
+end
+
+def part2(input_path)
+  puts "Part 2 for file: #{input_path}"
+  input = File.read(input_path)
+  s = input.split("\n\n")
+  register_init_lines = s[0].split("\n")
+  init_a = register_init_lines[0].match(/Register A: (\d+)/)[1].to_i
+  init_b = register_init_lines[1].match(/Register B: (\d+)/)[1].to_i
+  init_c = register_init_lines[2].match(/Register C: (\d+)/)[1].to_i
+  program = s[1].split(": ")[1].split(',').map(&:to_i)
+  init_a = 0
+  while true
+    p "init_a: #{init_a}" if init_a % 100000 == 0
+    registers = [init_a, init_b, init_c]
+    machine = { registers: registers, program: program.dup, pointer: 0 }
+    out = execute_program(machine)
+    # p "out: #{out} program: #{program}"
+    if out == program
+      break
+    end
+    init_a += 1
+  end
+  res = init_a
+  puts "Answer Part 2: #{res}"
+end
+
+def init_backwards
+  machine = { registers: [0, 0, 0],
+              program: [2,4,1,6,7,5,4,6,1,4,5,5,0,3,3,0],
+              pointer: 14,
+              output: [2,4,1,6,7,5,4,6,1,4,5,5,0,3,3,0] }
+  execute_program_backwards machine
+end
+
+def execute_program_backwards(machine)
+  pointer = machine[:pointer]
+  registers = [0, 0, 0]
+  machine[:registers] = registers
+  output = machine[:output]
+  output.reverse.each do |o|
+    until pointer < 0
+      instruction = machine[:program][pointer]
+      operand = machine[:program][pointer + 1]
+      case instruction
+      when 0
+        c_operand = combo_operand machine, operand
+        range_start = registers[0] * (2**c_operand)
+        [range_start...(range_start + (2**c_operand))].each do |possible_val|
+          dup = machine.dup
+          dup[:registers] = registers.dup
+          dup[:registers][0] = possible_val
+          dup[:output] = output.dup
+          dup[:pointer] = pointer - 2
+          execute_program_backwards dup
+        end
+        # registers[0] = machine[:registers][0] * (2**c_operand)
+      when 1
+        registers[1] = machine[:registers][1] ^ operand
+      when 2
+        # c_operand = combo_operand machine, operand
+        # registers[1] = c_operand % 8
+      when 3
+        # if machine[:registers][0] != 0
+        #   pointer = operand
+        #   next
+        # end
+      when 4
+        # registers[1] = machine[:registers][1] ^ machine[:registers][2]
+      when 5
+        # c_operand = combo_operand machine, operand
+        # registers[1] = c_operand % 8
+      when 6
+        # c_operand = combo_operand machine, operand
+        # registers[1] = machine[:registers][0] * 2 ** c_operand
+      when 7
+        # c_operand = combo_operand machine, operand
+        # registers[2] = machine[:registers][0] * 2 ** c_operand
+      end
+      pointer -= 2
+    end
+    pointer = 14
+  end
+end
+
