@@ -1,60 +1,5 @@
 program: 2,4,1,6,7,5,4,6,1,4,5,5,0,3,3,0
-bst 4 (bst A), bxl 6, cdv 5 (=cdv B), bxc 6 (=bxc ?), bxl 4, out 5 (=out B), adv 3, jnz 0
-bxl 4 = +4 if (X / 4) % 2 == 0
-      = -4 if (X / 4) % 2 == 1
-
-
-output backwards:
-jnz A == 0
-adv A < 8, A in [0, 7]
-0,
-out B == 0
-bxl B == 4
-bxc B ^ C == B == 4
-C == 0
-cdv A / 2**B == A / 16 == C == 0 => A < 16
-bxl B == B ^ 6 == 4 => B == 2
-bst B == A % 8 => 2 == A % 8 => A == 2
-====
-A = 2
-B = 2
-C = 0
-===
-jnz A == 2 != 0
-adv 3: A / 2**3 == 2 ==> A / 8 == 2 ==> A in [16, 23]
-3,
-out B == 3
-bxl 4: B ^ 4 == 3 ==> B == 7
-bxc 6: B ^ C == 7 ==> 7 ^ C == 7 ==> C == 0
-cdv 5: A / 2**B == 2 ==> A / 128 == 2 ==> A in [256, 383]
-
-3,
-
-0,
-
-5,
-
-5,
-
-4,
-
-1,
-
-6,
-
-4,
-
-5,
-
-7,
-
-6,
-
-1,
-
-4,
-
-2,
+bst 4 (bst A), bxl 6, cdv 5 (=cdv B), bxc 6
 
 A=165 | 10100101
 B=0
@@ -171,14 +116,6 @@ drop the last 2 bits [101]00
 flip the third bit = 011 (o)
 print [011]
 
-backwards
-o = 3: 011
-q = 7: 111 (100 XOR o)
-# r = 4: s XOR q = 000
-find s and t such that s XOR t = q
-and t << len(s) = r
-s = 3: 100 (100 XOR q)
-
 shift by 3 bits = 10
 grab last 3 bits [010]
 010 XOR 110 = 100 => 4
@@ -186,75 +123,3 @@ drop the last 4 bits []10
 4 = 100 XOR 0 = 100 (q)
 flip the third bit = 000 (o)
 print [000]
-
-backwards
-o = 0: 000
-q = 4: 100 (100 XOR o)
-# r = 4: s XOR q = 000
-find s such that s XOR q = 000
-s = 3: 100 (100 XOR q)
-
-current: ''
-out: 000
-a: out ^ 100 = 100
-find next such that
-  b: last 3 bits of next: xxxxxxxxx[xyz]
-  c: xyz XOR 110 = x'y'z
-  d: drop last c bits: xxxxxxxxx << c
-  e: d XOR c == a
-     a XOR d == c
-
-
-assume we have 5 bits abcdef
-x = def XOR 110
-x = d'e'f
-
-
-Register backwards
-A = 0
-B = 0
-C = 0
-== unshift 3: A << 3
-A = xyz
-B = 000
-C = 000
-== out B % 8: cut off the last 3 bits and print xyz
-A = xyz
-B = 000
-C = 000
-== bxl B ^ 4: XOR with 100 => flip third bit (+- 4)
-A = xyz
-B = 100
-C = 000
-== bxc B ^ C => flip bits where 1
-A = xyz
-B = 100
-C = 100
-== cdv A / 2**B: divide by 2^4 => strip off the last 4 bits
-A = xyz
-B = 100
-C = 000 (== out)
-== bxl B ^ 6: XOR with 110 => flip bits where 1
-A = xyz
-B = 010
-C = 000
-== bst A % 8: cut off the last 3 bits into B
-A = ?????010
-B = 010
-C = 000
-== jnz A != 0: A is not zero, next iteration
-A = ?????010
-B = 010
-C = 000
-== unshift 3: A << 3
-A = ?????010
-B = 010
-C = 000
-== out B % 8: cut off the last 3 bits and print 010
-A = ?????010
-B = ???011
-C = 000
-== bxl B ^ 4: XOR with 100 => flip third bit (+- 4)
-A = ?????010
-B = ???111
-C = 000

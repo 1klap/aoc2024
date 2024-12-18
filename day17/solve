@@ -18,10 +18,8 @@ def part1(input_path)
   init_c = register_init_lines[2].match(/Register C: (\d+)/)[1].to_i
   program = s[1].split(": ")[1].split(',').map(&:to_i)
   registers = [init_a, init_b, init_c]
-  # p "registers: #{registers} program: #{program}"
   machine = { registers: registers, program: program, pointer: 0 }
   out = execute_program(machine)
-  # p "final registers: #{machine[:registers]}"
   res = out.join ','
   puts "Answer Part 1: #{res}"
 end
@@ -126,33 +124,19 @@ def part2(input_path)
   # A = 84690 = 0o245322 => [5, 5, 0, 3, 3, 0]
   # A = 677547 = 0o2453253 => [4, 5, 5, 0, 3, 3, 0]
   # A = 5420377 = 0o24532531 => [1, 4, 5, 5, 0, 3, 3, 0]
-  last_15o = 35184372088831
-  offset__ = 22000000000000
-  # init_a = last_15o + offset__
-
-  # init_a = 165
   init_a = 0
-  # init_a = 677547
-
-  # init_a = 88_989_142_012_120
-  max_init_a = init_a + 1000000000
   while true
     # p "init_a: #{init_a}" #if init_a % 100000 == 0
+    # scale a quicker by approaching the solution
     # a = init_a
-    a = 0o245 * 8**3 + init_a
-    a = 0o245325 * 8**6 + init_a
+    # a = 0o245 * 8**3 + init_a
+    # a = 0o245325 * 8**6 + init_a
     a = 0o24532534 * 8**8 + init_a
 
-    # a = init_a * 8**7 + 677547
     registers = [a, init_b, init_c]
     machine = { registers: registers, program: program.dup, pointer: 0 }
     out = execute_program(machine)
-    # p "#{init_a} #out: #{out.size} out: #{out} register: #{machine[:registers]}"
-
-    # if out == program || init_a == max_init_a
-    # if out == [1, 4, 5, 5, 0, 3, 3, 0] || init_a == max_init_a
-
-    # 2,4,1,6,7,5,4,6,1,4,5,5,0,3,3,0
+    # program: 2,4,1,6,7,5,4,6,1,4,5,5,0,3,3,0
     if out == [0] ||
       out == [3, 0] ||
       out == [3, 3, 0] ||
@@ -172,80 +156,9 @@ def part2(input_path)
     end
 
     if out == program
-      p "Solution found: #{init_a} #{a}"
+      puts "Answer Part 2: #{a}"
       break
     end
-
-    # if out == [0] || init_a == max_init_a
-    #   break
-    # end
-    if out[-1] == 0
-      # p "init_a: #{init_a} out: #{out}"
-      # break
-    end
     init_a += 1
-    # init_a *= 2**8
-  end
-  p "init_a oct: #{init_a.to_s(8)}" # 10100101
-  res = init_a
-  puts "Answer Part 2: #{res}"
-end
-
-def init_backwards
-  machine = { registers: [0, 0, 0],
-              program: [2,4,1,6,7,5,4,6,1,4,5,5,0,3,3,0],
-              pointer: 14,
-              output: [2,4,1,6,7,5,4,6,1,4,5,5,0,3,3,0] }
-  execute_program_backwards machine
-end
-
-def execute_program_backwards(machine)
-  pointer = machine[:pointer]
-  registers = [0, 0, 0]
-  machine[:registers] = registers
-  output = machine[:output]
-  output.reverse.each do |o|
-    until pointer < 0
-      instruction = machine[:program][pointer]
-      operand = machine[:program][pointer + 1]
-      case instruction
-      when 0
-        c_operand = combo_operand machine, operand
-        range_start = registers[0] * (2**c_operand)
-        [range_start...(range_start + (2**c_operand))].each do |possible_val|
-          dup = machine.dup
-          dup[:registers] = registers.dup
-          dup[:registers][0] = possible_val
-          dup[:output] = output.dup
-          dup[:pointer] = pointer - 2
-          execute_program_backwards dup
-        end
-        # registers[0] = machine[:registers][0] * (2**c_operand)
-      when 1
-        registers[1] = machine[:registers][1] ^ operand
-      when 2
-        # c_operand = combo_operand machine, operand
-        # registers[1] = c_operand % 8
-      when 3
-        # if machine[:registers][0] != 0
-        #   pointer = operand
-        #   next
-        # end
-      when 4
-        # registers[1] = machine[:registers][1] ^ machine[:registers][2]
-      when 5
-        # c_operand = combo_operand machine, operand
-        # registers[1] = c_operand % 8
-      when 6
-        # c_operand = combo_operand machine, operand
-        # registers[1] = machine[:registers][0] * 2 ** c_operand
-      when 7
-        # c_operand = combo_operand machine, operand
-        # registers[2] = machine[:registers][0] * 2 ** c_operand
-      end
-      pointer -= 2
-    end
-    pointer = 14
   end
 end
-
