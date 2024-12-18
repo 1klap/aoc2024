@@ -32,7 +32,7 @@ def execute_program(machine)
   out = []
 
   while pointer < machine[:program].length
-    # p "registers: #{machine[:registers]} pointer: #{pointer}"
+    p "registers: #{machine[:registers]} pointer: #{pointer}"
     instruction = program[pointer]
     operand = program[pointer + 1]
     case instruction
@@ -110,15 +110,43 @@ def part2(input_path)
   init_b = register_init_lines[1].match(/Register B: (\d+)/)[1].to_i
   init_c = register_init_lines[2].match(/Register C: (\d+)/)[1].to_i
   program = s[1].split(": ")[1].split(',').map(&:to_i)
-  init_a = 0
+  # between 2**45 and 2**48 - 1 => 35_184_372_088_832 and 281_474_976_710_655
+  # we have an output of 16
+  # A = 2 => [0]
+  # A = 16 => [2, 0] to A = 23 => [6, 0]
+  # A = 128 => [0, 2, 0] to A = 191 => [2, 6, 0]
+  # A = 1024 => [2, 0, 2, 0] to A = 1535 => [2, 2, 6, 0]
+  # A = 8192 => [2, 2, 0, 2, 0] to A = 12287 => [2, 2, 2, 6, 0]
+
+  # A = 2 => [0]
+  # A = 17 => [3, 0]
+  # A = 165 => [3, 3, 0]
+  # A = 1323 => [0, 3, 3, 0]
+  # A = 10586 => [5, 0, 3, 3, 0]
+  # A = 84690 => [5, 5, 0, 3, 3, 0]
+  # A = 677547 => [4, 5, 5, 0, 3, 3, 0]
+  # A = 5420377 => [1, 4, 5, 5, 0, 3, 3, 0]
+  last_15o = 35184372088831
+  offset__ = 22000000000000
+  # init_a = last_15o + offset__
+  init_a = 165
+  # init_a = 88_989_142_012_120
+  max_init_a = init_a + 1000000000
   while true
-    p "init_a: #{init_a}" if init_a % 100000 == 0
+    # p "init_a: #{init_a}" #if init_a % 100000 == 0
     registers = [init_a, init_b, init_c]
     machine = { registers: registers, program: program.dup, pointer: 0 }
     out = execute_program(machine)
-    # p "out: #{out} program: #{program}"
-    if out == program
+    p "#{init_a} #out: #{out.size} out: #{out} register: #{machine[:registers]}"
+
+    # if out == program || init_a == max_init_a
+    # if out == [1, 4, 5, 5, 0, 3, 3, 0] || init_a == max_init_a
+    if out == [3, 3, 0] || init_a == max_init_a
       break
+    end
+    if out[-1] == 0
+      # p "init_a: #{init_a} out: #{out}"
+      # break
     end
     init_a += 1
   end

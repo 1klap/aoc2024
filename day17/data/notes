@@ -1,5 +1,9 @@
 program: 2,4,1,6,7,5,4,6,1,4,5,5,0,3,3,0
 bst 4 (bst A), bxl 6, cdv 5 (=cdv B), bxc 6 (=bxc ?), bxl 4, out 5 (=out B), adv 3, jnz 0
+bxl 4 = +4 if (X / 4) % 2 == 0
+      = -4 if (X / 4) % 2 == 1
+
+
 output backwards:
 jnz A == 0
 adv A < 8, A in [0, 7]
@@ -51,3 +55,206 @@ cdv 5: A / 2**B == 2 ==> A / 128 == 2 ==> A in [256, 383]
 4,
 
 2,
+
+A=165 | 10100101
+B=0
+C=0
+== bst A % 8: cut off the last 3 bits into B
+A=165 | 10100101
+B=5 | 101
+C=0
+== bxl B ^ 6: XOR with 110 => flip bits where 1
+A=165 | 10100101
+B=3 | 011
+C=0
+== cdv A / 2**B: divide by 2^3 => strip off the last 3 bits
+A=165 | 10100101
+B=3 | 011 = 00011
+C=20 | 10100
+$$$ we split the bits in 2 parts, position might differ
+== bxc B ^ C: 011 XOR 10100 => flip bits where 1
+A=165 | 10100101
+B=23 | 10111
+C=20 | 10100
+== bxl B ^ 4: XOR with 100 => flip third bit (+- 4)
+A=165 | 10100101
+B=19 | 10011
+C=20 | 10100
+== out B % 8: cut off the last 3 bits and print 3 | 011
+A=165 | 10100101
+B=19 | 10011
+C=20 | 10100
+== adv 3: divide by 2^3 => shift by 3 bits
+A=20 | 10100
+B=19 | 10011
+C=20 | 10100
+== jnz A != 0: A is not zero, next iteration
+A=20 | 10100
+B=19 | 10011 # doesn't matter
+C=20 | 10100 # doesn't matter
+== bst A % 8: cut off the last 3 bits into B
+A=20 | 10100
+B=4 | 100
+C=20 | 10100 # doesn't matter
+== bxl B ^ 6: XOR with 110 => flip bits where 1
+A=20 | 10100
+B=2 | 010
+C=20 | 10100 # doesn't matter
+== cdv A / 2**B: divide by 2^2 => strip off the last 2 bits
+A=20 | 10100
+B=2 | 010
+C=5 | 101
+== bxc B ^ C: 010 XOR 101 => flip bits where 1
+A=20 | 10100
+B=7 | 111
+C=5 | 101
+== bxl B ^ 4: XOR with 100 => flip third bit (+- 4)
+A=20 | 10100
+B=3 | 011
+C=5 | 101
+== out B % 8: cut off the last 3 bits and print 3 | 011
+A=20 | 10100
+B=3 | 011
+C=5 | 101
+== adv 3: divide by 2^3 => shift by 3 bits
+A=2 | 10
+B=3 | 011
+C=5 | 101
+== jnz A != 0: A is not zero, next iteration
+A=2 | 10
+B=3 | 011 # doesn't matter
+C=5 | 101 # doesn't matter
+== bst A % 8: cut off the last 3 bits into B
+A=2 | 10
+B=2 | 010
+C=5 | 101 # doesn't matter
+== bxl B ^ 6: XOR with 110 => flip bits where 1
+A=2 | 10
+B=4 | 100
+C=5 | 101 # doesn't matter
+== cdv A / 2**B: divide by 2^4 => strip off the last 4 bits
+A=2 | 10
+B=4 | 100
+C=0 (no bits left)
+== bxc B ^ C: 100 XOR 0 => flip bits where 1 (=>C=B)
+A=2 | 10
+B=4 | 100
+C=4 | 100
+== bxl B ^ 4: XOR with 100 => flip third bit (+- 4)
+A=2 | 10
+B=0 | 000
+C=4 | 100
+== out B % 8: cut off the last 3 bits and print 0 | 000
+A=2 | 10
+B=0 | 000
+C=4 | 100
+== adv 3: divide by 2^3 => shift by 3 bits
+A=0 | 000
+B=0 | 000 # doesn't matter
+C=4 | 100 # doesn't matter
+== jnz A == 0: A is zero, stop
+
+Evolution of A
+10100101
+grab last 3 bits 10100[101]
+101 XOR with 110 = 011 => 3
+drop the last 3 bits [10100]101
+3 = 011 XOR 10100 = 10111
+flip the third bit = 10011
+print 10[011]
+
+shift by 3 bits = 10100
+grab last 3 bits 10[100]
+100 XOR 110 = 010 => 2
+drop the last 2 bits [101]00
+2 = 010 XOR 101 = 111 (q)
+flip the third bit = 011 (o)
+print [011]
+
+backwards
+o = 3: 011
+q = 7: 111 (100 XOR o)
+# r = 4: s XOR q = 000
+find s and t such that s XOR t = q
+and t << len(s) = r
+s = 3: 100 (100 XOR q)
+
+shift by 3 bits = 10
+grab last 3 bits [010]
+010 XOR 110 = 100 => 4
+drop the last 4 bits []10
+4 = 100 XOR 0 = 100 (q)
+flip the third bit = 000 (o)
+print [000]
+
+backwards
+o = 0: 000
+q = 4: 100 (100 XOR o)
+# r = 4: s XOR q = 000
+find s such that s XOR q = 000
+s = 3: 100 (100 XOR q)
+
+current: ''
+out: 000
+a: out ^ 100 = 100
+find next such that
+  b: last 3 bits of next: xxxxxxxxx[xyz]
+  c: xyz XOR 110 = x'y'z
+  d: drop last c bits: xxxxxxxxx << c
+  e: d XOR c == a
+     a XOR d == c
+
+
+assume we have 5 bits abcdef
+x = def XOR 110
+x = d'e'f
+
+
+Register backwards
+A = 0
+B = 0
+C = 0
+== unshift 3: A << 3
+A = xyz
+B = 000
+C = 000
+== out B % 8: cut off the last 3 bits and print xyz
+A = xyz
+B = 000
+C = 000
+== bxl B ^ 4: XOR with 100 => flip third bit (+- 4)
+A = xyz
+B = 100
+C = 000
+== bxc B ^ C => flip bits where 1
+A = xyz
+B = 100
+C = 100
+== cdv A / 2**B: divide by 2^4 => strip off the last 4 bits
+A = xyz
+B = 100
+C = 000 (== out)
+== bxl B ^ 6: XOR with 110 => flip bits where 1
+A = xyz
+B = 010
+C = 000
+== bst A % 8: cut off the last 3 bits into B
+A = ?????010
+B = 010
+C = 000
+== jnz A != 0: A is not zero, next iteration
+A = ?????010
+B = 010
+C = 000
+== unshift 3: A << 3
+A = ?????010
+B = 010
+C = 000
+== out B % 8: cut off the last 3 bits and print 010
+A = ?????010
+B = ???011
+C = 000
+== bxl B ^ 4: XOR with 100 => flip third bit (+- 4)
+A = ?????010
+B = ???111
+C = 000
