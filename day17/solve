@@ -32,7 +32,7 @@ def execute_program(machine)
   out = []
 
   while pointer < machine[:program].length
-    p "registers: #{machine[:registers]} pointer: #{pointer}"
+    # p "registers: #{machine[:registers]} pointer: #{pointer}"
     instruction = program[pointer]
     operand = program[pointer + 1]
     case instruction
@@ -40,43 +40,43 @@ def execute_program(machine)
       c_operand = combo_operand machine, operand
       numerator = machine[:registers][0]
       result = numerator / 2 ** c_operand
-      p "adv: #{numerator} / 2**#{c_operand} result: #{result}"
+      # p "adv: #{numerator} / 2**#{c_operand} result: #{result}"
       machine[:registers][0] = result
     when 1
       result = machine[:registers][1] ^ operand
-      p "bxl: #{machine[:registers][1]} ^ #{operand} result: #{result}"
+      # p "bxl: #{machine[:registers][1]} ^ #{operand} result: #{result}"
       machine[:registers][1] = result
     when 2
       c_operand = combo_operand machine, operand
       result = c_operand % 8
-      p "bst: #{c_operand} % 8 result: #{result}"
+      # p "bst: #{c_operand} % 8 result: #{result}"
       machine[:registers][1] = result
     when 3
-      p "jnz: #{machine[:registers][0]} != 0"
+      # p "jnz: #{machine[:registers][0]} != 0"
       if machine[:registers][0] != 0
         pointer = operand
         next
       end
     when 4
       result = machine[:registers][1] ^ machine[:registers][2]
-      p "bxc: #{machine[:registers][1]} ^ #{machine[:registers][2]} result: #{result}"
+      # p "bxc: #{machine[:registers][1]} ^ #{machine[:registers][2]} result: #{result}"
       machine[:registers][1] = result
     when 5
       c_operand = combo_operand machine, operand
       result = c_operand % 8
-      p "out: #{c_operand} % 8 result: #{result}"
+      # p "out: #{c_operand} % 8 result: #{result}"
       out << result
     when 6
       c_operand = combo_operand machine, operand
       numerator = machine[:registers][0]
       result = numerator / 2 ** c_operand
-      p "bdv: #{numerator} / 2**#{c_operand} result: #{result}"
+      # p "bdv: #{numerator} / 2**#{c_operand} result: #{result}"
       machine[:registers][1] = result
     when 7
       c_operand = combo_operand machine, operand
       numerator = machine[:registers][0]
       result = numerator / 2 ** c_operand
-      p "cdv: #{numerator} / 2**#{c_operand} result: #{result}"
+      # p "cdv: #{numerator} / 2**#{c_operand} result: #{result}"
       machine[:registers][2] = result
     end
     pointer += 2
@@ -123,33 +123,70 @@ def part2(input_path)
   # A = 165 => [3, 3, 0]
   # A = 1323 => [0, 3, 3, 0]
   # A = 10586 => [5, 0, 3, 3, 0]
-  # A = 84690 => [5, 5, 0, 3, 3, 0]
-  # A = 677547 => [4, 5, 5, 0, 3, 3, 0]
-  # A = 5420377 => [1, 4, 5, 5, 0, 3, 3, 0]
+  # A = 84690 = 0o245322 => [5, 5, 0, 3, 3, 0]
+  # A = 677547 = 0o2453253 => [4, 5, 5, 0, 3, 3, 0]
+  # A = 5420377 = 0o24532531 => [1, 4, 5, 5, 0, 3, 3, 0]
   last_15o = 35184372088831
   offset__ = 22000000000000
   # init_a = last_15o + offset__
-  init_a = 165
+
+  # init_a = 165
+  init_a = 0
+  # init_a = 677547
+
   # init_a = 88_989_142_012_120
   max_init_a = init_a + 1000000000
   while true
     # p "init_a: #{init_a}" #if init_a % 100000 == 0
-    registers = [init_a, init_b, init_c]
+    # a = init_a
+    a = 0o245 * 8**3 + init_a
+    a = 0o245325 * 8**6 + init_a
+    a = 0o24532534 * 8**8 + init_a
+
+    # a = init_a * 8**7 + 677547
+    registers = [a, init_b, init_c]
     machine = { registers: registers, program: program.dup, pointer: 0 }
     out = execute_program(machine)
-    p "#{init_a} #out: #{out.size} out: #{out} register: #{machine[:registers]}"
+    # p "#{init_a} #out: #{out.size} out: #{out} register: #{machine[:registers]}"
 
     # if out == program || init_a == max_init_a
     # if out == [1, 4, 5, 5, 0, 3, 3, 0] || init_a == max_init_a
-    if out == [3, 3, 0] || init_a == max_init_a
+
+    # 2,4,1,6,7,5,4,6,1,4,5,5,0,3,3,0
+    if out == [0] ||
+      out == [3, 0] ||
+      out == [3, 3, 0] ||
+      out == [0, 3, 3, 0] ||
+      out == [5, 0, 3, 3, 0] ||
+      out == [5, 5, 0, 3, 3, 0] ||
+      out == [4, 5, 5, 0, 3, 3, 0] ||
+      out == [1, 4, 5, 5, 0, 3, 3, 0] ||
+      out == [6, 1, 4, 5, 5, 0, 3, 3, 0] ||
+      out == [4, 6, 1, 4, 5, 5, 0, 3, 3, 0] ||
+      out == [5, 4, 6, 1, 4, 5, 5, 0, 3, 3, 0] ||
+      out == [7, 5, 4, 6, 1, 4, 5, 5, 0, 3, 3, 0] ||
+      out == [6, 7, 5, 4, 6, 1, 4, 5, 5, 0, 3, 3, 0] ||
+      out == [1, 6, 7, 5, 4, 6, 1, 4, 5, 5, 0, 3, 3, 0] ||
+      out == [4, 1, 6, 7, 5, 4, 6, 1, 4, 5, 5, 0, 3, 3, 0]
+      p "init_a: #{init_a} a: #{a} oct: #{a.to_s 8} out: #{out} #out: #{out.size}"
+    end
+
+    if out == program
+      p "Solution found: #{init_a} #{a}"
       break
     end
+
+    # if out == [0] || init_a == max_init_a
+    #   break
+    # end
     if out[-1] == 0
       # p "init_a: #{init_a} out: #{out}"
       # break
     end
     init_a += 1
+    # init_a *= 2**8
   end
+  p "init_a oct: #{init_a.to_s(8)}" # 10100101
   res = init_a
   puts "Answer Part 2: #{res}"
 end
