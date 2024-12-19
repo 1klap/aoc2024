@@ -1,0 +1,119 @@
+#!/usr/bin/env ruby
+
+require_relative '../cmd_line_helper'
+
+END {
+  part1_fun = ->(input_path) { part1(input_path) }
+  part2_fun = ->(input_path) { part2(input_path) }
+  run part1_fun, part2_fun
+}
+
+def part1(input_path)
+  puts "Part 1 for file: #{input_path}"
+  input = File.read(input_path)
+  grid = init_grid input_path == 'data/ex1.txt' ? 7 : 71
+  corrupted = input.split("\n")
+               .map { |line| line.split(',').map(&:to_i) }
+  count = input_path == 'data/ex1.txt' ? 12 : 1034
+  corrupted.take(count).each { |x, y|
+    grid[y][x][:corrupted] = true
+  }
+  # p "grid: #{grid}"
+  # queue = [[0, 1], [1, 0]]
+  grid[0][0][:min_steps] = 0
+
+  queue = [[0, 0]]
+  until queue.empty?
+    x, y = queue.shift
+    next if x < 0 || y < 0 || x >= grid.size || y >= grid.size
+    next if grid[y][x][:corrupted]
+    [[0, 1], [0, -1], [1, 0], [-1, 0]].each do |dx, dy|
+      new_x = x + dx
+      new_y = y + dy
+      # p "new_x: #{new_x} new_y: #{new_y}"
+      unless new_x < 0 || new_y < 0 || new_x >= grid.size || new_y >= grid.size
+        unless grid[new_y][new_x][:corrupted]
+          candidate = grid[new_y][new_x]
+          # p "candidate: #{candidate} x: #{new_x} y: #{new_y}"
+          # next if candidate[:min_steps].nil?
+          if candidate[:min_steps].nil? || (candidate[:min_steps] > grid[y][x][:min_steps] + 1)
+            candidate[:min_steps] = grid[y][x][:min_steps] + 1
+            # p "candidate: #{candidate} x: #{new_x} y: #{new_y}"
+            grid[new_y][new_x] = candidate
+            queue << [new_x, new_y]
+          end
+        end
+      end
+    end
+  end
+  res = grid[grid.size - 1][grid.size - 1][:min_steps]
+  # p "grid: #{grid}"
+  p "g: #{grid[grid.size - 1][grid.size - 1]}"
+  puts "Answer Part 1: #{res}"
+end
+
+
+
+def init_grid(size)
+  grid = []
+  (0...size).each { |y|
+    (0...size).each { |x|
+      grid[y] ||= []
+      grid[y][x] = { min_steps: nil, visited: false, corrupted: false }
+    }
+  }
+  grid
+end
+
+def part2(input_path)
+  puts "Part 2 for file: #{input_path}"
+  input = File.read(input_path)
+  corrupted = input.split("\n")
+                   .map { |line| line.split(',').map(&:to_i) }
+  count = input_path == 'data/ex1.txt' ? 12 : 1034
+  blocked = false
+  until blocked
+    count += 1
+    grid = init_grid input_path == 'data/ex1.txt' ? 7 : 71
+    corrupted.take(count).each { |x, y|
+      grid[y][x][:corrupted] = true
+    }
+    queue = [[0, 0]]
+    grid[0][0][:min_steps] = 0
+
+    until queue.empty?
+      # p "queue size: #{queue.size}"
+      # p "queue: #{queue}"
+      x, y = queue.shift
+      current = grid[y][x]
+      # p "current: #{current} x: #{x} y: #{y}"
+      next if x < 0 || y < 0 || x >= grid.size || y >= grid.size
+      # next if grid[y][x][:visited]
+      # grid[y][x][:visited] = true
+      next if grid[y][x][:corrupted]
+      [[0, 1], [0, -1], [1, 0], [-1, 0]].each do |dx, dy|
+        new_x = x + dx
+        new_y = y + dy
+        # p "new_x: #{new_x} new_y: #{new_y}"
+        unless new_x < 0 || new_y < 0 || new_x >= grid.size || new_y >= grid.size
+          unless grid[new_y][new_x][:corrupted]
+            candidate = grid[new_y][new_x]
+            # p "candidate: #{candidate} x: #{new_x} y: #{new_y}"
+            # next if candidate[:min_steps].nil?
+            if candidate[:min_steps].nil? || (candidate[:min_steps] > grid[y][x][:min_steps] + 1)
+              candidate[:min_steps] = grid[y][x][:min_steps] + 1
+              # p "candidate: #{candidate} x: #{new_x} y: #{new_y}"
+              grid[new_y][new_x] = candidate
+              queue << [new_x, new_y]
+            end
+          end
+        end
+      end
+    end
+    p "path count: #{count} block: #{corrupted[count - 1]} #{grid[grid.size - 1][grid.size - 1][:min_steps]}"
+    blocked = grid[grid.size - 1][grid.size - 1][:min_steps].nil?
+  end
+  res = corrupted[count - 1]
+  puts "Answer Part 2: #{res[0]},#{res[1]}"
+end
+
