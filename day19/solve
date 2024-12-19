@@ -28,9 +28,7 @@ def can_build?(design, patterns)
     pattern_last_index = design.rindex pattern
     if pattern_last_index && pattern_last_index == design.size - pattern.size
       subpattern = design.slice(0, pattern_last_index)
-      if can_build?(subpattern, patterns)
-        return true
-      end
+      return true if can_build?(subpattern, patterns)
     end
   end
   false
