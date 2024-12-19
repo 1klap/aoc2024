@@ -21,6 +21,9 @@ def part1(input_path)
   puts "Answer Part 1: #{res}"
 end
 
+# This method is still fast on the input data, because there is a bias embedded in them.
+# Going forward or backward through the pattern should make no difference at all.
+# To have this working for all inputs, we need to memoize the results
 def can_build?(design, patterns)
   return true if design.empty?
 
