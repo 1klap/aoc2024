@@ -1,0 +1,68 @@
+#!/usr/bin/env ruby
+
+require_relative '../cmd_line_helper'
+
+END {
+  part1_fun = ->(input_path) { part1(input_path) }
+  part2_fun = ->(input_path) { part2(input_path) }
+  run part1_fun, part2_fun
+}
+
+def part1(input_path)
+  puts "Part 1 for file: #{input_path}"
+  input = File.read(input_path)
+  s = input.split("\n\n")
+  patterns = s[0].split(",").map(&:strip)
+  designs = s[1].split("\n")
+  possible_designs = designs.select do |design|
+    can_build?(design, patterns)
+  end
+  res = possible_designs.count
+  puts "Answer Part 1: #{res}"
+end
+
+def can_build?(design, patterns)
+  return true if design.empty?
+
+  patterns.each do |pattern|
+    pattern_last_index = design.rindex pattern
+    if pattern_last_index && pattern_last_index == design.size - pattern.size
+      subpattern = design.slice(0, pattern_last_index)
+      if can_build?(subpattern, patterns)
+        return true
+      end
+    end
+  end
+  false
+end
+
+def part2(input_path)
+  puts "Part 2 for file: #{input_path}"
+  input = File.read(input_path)
+  s = input.split("\n\n")
+  patterns = s[0].split(",").map(&:strip)
+  designs = s[1].split("\n")
+  pattern_cache = {}
+  possible_design_counts = designs.map do |design|
+    design_counts(design, patterns, pattern_cache)
+  end
+  res = possible_design_counts.sum
+  puts "Answer Part 2: #{res}"
+end
+
+def design_counts(design, patterns, pattern_cache)
+  return 1 if design.empty?
+  return pattern_cache[design] if pattern_cache.include? design
+
+  count = 0
+  patterns.each do |pattern|
+    pattern_last_index = design.rindex pattern
+    if pattern_last_index && pattern_last_index == design.size - pattern.size
+      subpattern = design.slice(0, pattern_last_index)
+      count += design_counts(subpattern, patterns, pattern_cache)
+    end
+  end
+  pattern_cache[design] = count
+  count
+end
+
