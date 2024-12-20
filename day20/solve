@@ -11,83 +11,85 @@ END {
 def part1(input_path)
   puts "Part 1 for file: #{input_path}"
   input = File.read(input_path)
-  grid = input.split("\n").map(&:chars)
-  e = positions_for_symbol(grid, 'E').map { |position| { position: position, min_cost: 0, cheats: [] } }.first
-  s = positions_for_symbol(grid, 'S').map { |position| { position: position, min_cost: nil, cheats: [] } }.first
-  nodes = positions_for_symbol(grid, '.').map do |position|
-    { position: position, min_cost: nil, cheats: [] }
-  end
-  nodes << s
-  nodes << e
-  p "E: #{e}"
-  p "S: #{s}"
-  min_cost_for_nodes(nodes, grid, s, e)
-  p "costs calculated"
-  nodes.each do |node|
-    find_cheats node, nodes, grid
-  end
-  # p "S: #{s}"
-  # nodes.each do |node|
-  #   p "Node: #{node}"
-  # end
-  cheats = nodes.map { |node| node[:cheats] }
-                .select { |cheats| cheats.count > 0 }
-                .reduce([], :+)
-                .sort_by { |cheat| cheat[4] }
-  # p "Cheats: #{cheats}"
-  # p "Cheats tally: #{cheats.map{ |c| c[4] }.tally.sort}"
+  grid = init_grid input
+  e = cells_for_symbol(grid, 'E').first
+  e[:min_cost] = 0
+  min_cost_for_cells(grid, e)
+  cheats = cheats_for_cells(grid)
   res = cheats.count
   puts "Answer Part 1: #{res}"
 end
 
-def positions_for_symbol(grid, symbol)
-  positions = []
-  grid.each_with_index do |row, y|
-    row.each_with_index do |cell, x|
-      positions << [x, y] if cell == symbol
+def init_grid(input)
+  rows = input.strip.split("\n")
+  grid = []
+  rows.each_with_index do |row, y|
+    row.chars.each_with_index do |cell, x|
+      grid[y] ||= []
+      grid[y][x] = { symbol: cell, position: [x, y], min_cost: nil }
     end
   end
-  positions
+  grid
 end
 
-def min_cost_for_nodes(nodes, grid, s, e)
+def cells_for_symbol(grid, symbol)
+  cells = []
+  grid.each do |row|
+    row.each do |cell|
+      cells << cell if cell[:symbol] == symbol
+    end
+  end
+  cells
+end
+
+def min_cost_for_cells(grid, e)
   fringe = Set.new
   fringe << e[:position]
   until fringe.empty?
-    # p "fringe size: #{fringe.size}"
-    current_position = pop_from_set fringe
-    current = nodes.find { |node| node[:position] == current_position }
+    x, y = pop_from_set fringe
+    current = grid[y][x]
     x, y = current[:position]
     [[0, 1], [0, -1], [1, 0], [-1, 0]].each do |dx, dy|
       new_x = x + dx
       new_y = y + dy
       next if new_x < 0 || new_y < 0 || new_x >= grid[0].size || new_y >= grid.size
-      candidate = nodes.find { |node| node[:position] == [new_x, new_y] }
-      next if candidate.nil?
+
+      candidate = grid[new_y][new_x]
+      next if candidate[:symbol] == '#'
+
       if candidate[:min_cost].nil? || candidate[:min_cost] > current[:min_cost] + 1
         candidate[:min_cost] = current[:min_cost] + 1
-        fringe << candidate[:position] if candidate[:position] != s[:position]
+        fringe << candidate[:position] if candidate[:symbol] != 'S'
       end
     end
   end
 end
 
-def find_cheats(node, nodes, grid)
-  x, y = node[:position]
+def cheats_for_cells(grid)
+  cheats = []
+  grid.each do |row|
+    row.each do |cell|
+      cheats += cheats_for_cell cell, grid if cell[:symbol] != '#'
+    end
+  end
+  cheats
+end
+
+def cheats_for_cell(cell, grid)
+  cheats = []
+  x, y = cell[:position]
   [[0, 2], [1, 1], [2, 0], [1, -1], [0, -2], [-1, -1], [-2, 0], [-1, 1]].each do |dx, dy|
     new_x = x + dx
     new_y = y + dy
     next if new_x < 0 || new_y < 0 || new_x >= grid[0].size || new_y >= grid.size
-    candidate = nodes.find { |node| node[:position] == [new_x, new_y] }
-    next if candidate.nil?
-    saved_cost = node[:min_cost] - candidate[:min_cost] - 2
-    node[:cheats] << [x, y, dx, dy, saved_cost] if saved_cost >= 100
-    # if candidate[:min_cost] < node[:min_cost] - 2
-    #
-    #   saved_cost = node[:min_cost] - candidate[:min_cost] - 2
-    #   node[:cheats] << [x, y, dx, dy, saved_cost] if saved_cost >= 100
-    # end
+
+    candidate = grid[new_y][new_x]
+    next if candidate[:symbol] == '#'
+
+    saved_cost = cell[:min_cost] - candidate[:min_cost] - 2
+    cheats << [x, y, dx, dy, saved_cost] if saved_cost >= 100
   end
+  cheats
 end
 
 def pop_from_set(set)
@@ -99,63 +101,63 @@ end
 def part2(input_path)
   puts "Part 2 for file: #{input_path}"
   input = File.read(input_path)
-  grid = input.split("\n").map(&:chars)
-  e = positions_for_symbol(grid, 'E').map { |position| { position: position, min_cost: 0, cheats: [] } }.first
-  s = positions_for_symbol(grid, 'S').map { |position| { position: position, min_cost: nil, cheats: [] } }.first
-  nodes = positions_for_symbol(grid, '.').map do |position|
-    { position: position, min_cost: nil, cheats: [] }
-  end
-  nodes << s
-  nodes << e
-  p "E: #{e}"
-  p "S: #{s}"
-  min_cost_for_nodes(nodes, grid, s, e)
-  p "costs calculated"
-  nodes.each do |node|
-    find_new_cheats node, nodes, grid
-  end
-  # p "S: #{s}"
-  # nodes.each do |node|
-  #   p "Node: #{node}"
-  # end
-  cheats = nodes.map { |node| node[:cheats] }
-                .select { |cheats| cheats.count > 0 }
-                .reduce([], :+)
-                .sort_by { |cheat| cheat[4] }
-  p "Cheats: #{cheats}"
-  # p "Cheats tally: #{cheats.map{ |c| c[4] }.tally.sort}"
+  grid = init_grid input
+  e = cells_for_symbol(grid, 'E').first
+  e[:min_cost] = 0
+  min_cost_for_cells(grid, e)
+  # draw_grid grid
+  cheats = cheats_for_cells_and_maxdistance(grid, 20)
   res = cheats.count
   puts "Answer Part 2: #{res}"
 end
 
-def find_new_cheats(node, nodes, grid)
-  x, y = node[:position]
-  [[0, 2], [1, 1], [2, 0], [1, -1], [0, -2], [-1, -1], [-2, 0], [-1, 1], # distance 2
-   [0, 3], [1, 2], [2, 1], [3, 0], [2, -1], [1, -2], [0, -3], [-1, -2], [-2, -1], [-3, 0], [-2, 1], [-1, 2], # distance 3
-   [0, 4], [1, 3], [2, 2], [3, 1], [4, 0], [3, -1], [2, -2], [1, -3], [0, -4], [-1, -3], [-2, -2], [-3, -1], [-4, 0], [-3, 1], [-2, 2], [-1, 3], # distance 4
-   [0, 5], [1, 4], [2, 3], [3, 2], [4, 1], [5, 0], [4, -1], [3, -2], [2, -3], [1, -4], [0, -5], [-1, -4], [-2, -3], [-3, -2], [-4, -1], [-5, 0], [-4, 1], [-3, 2], [-2, 3], [-1, 4], # distance 5
-   [0, 6], [1, 5], [2, 4], [3, 3], [4, 2], [5, 1], [6, 0], [5, -1], [4, -2], [3, -3], [2, -4], [1, -5], [0, -6], [-1, -5], [-2, -4], [-3, -3], [-4, -2], [-5, -1], [-6, 0], [-5, 1], [-4, 2], [-3, 3], [-2, 4], [-1, 5], # distance 6
-   [0, 7], [1, 6], [2, 5], [3, 4], [4, 3], [5, 2], [6, 1], [7, 0], [6, -1], [5, -2], [4, -3], [3, -4], [2, -5], [1, -6], [0, -7], [-1, -6], [-2, -5], [-3, -4], [-4, -3], [-5, -2], [-6, -1], [-7, 0], [-6, 1], [-5, 2], [-4, 3], [-3, 4], [-2, 5], [-1, 6], # distance 7
-   [0, 8], [1, 7], [2, 6], [3, 5], [4, 4], [5, 3], [6, 2], [7, 1], [8, 0], [7, -1], [6, -2], [5, -3], [4, -4], [3, -5], [2, -6], [1, -7], [0, -8], [-1, -7], [-2, -6], [-3, -5], [-4, -4], [-5, -3], [-6, -2], [-7, -1], [-8, 0], [-7, 1], [-6, 2], [-5, 3], [-4, 4], [-3, 5], [-2, 6], [-1, 7], # distance 8
-   [0, 9], [1, 8], [2, 7], [3, 6], [4, 5], [5, 4], [6, 3], [7, 2], [8, 1], [9, 0], [8, -1], [7, -2], [6, -3], [5, -4], [4, -5], [3, -6], [2, -7], [1, -8], [0, -9], [-1, -8], [-2, -7], [-3, -6], [-4, -5], [-5, -4], [-6, -3], [-7, -2], [-8, -1], [-9, 0], [-8, 1], [-7, 2], [-6, 3], [-5, 4], [-4, 5], [-3, 6], [-2, 7], [-1, 8], # distance 9
-   [0, 10], [1, 9], [2, 8], [3, 7], [4, 6], [5, 5], [6, 4], [7, 3], [8, 2], [9, 1], [10, 0], [9, -1], [8, -2], [7, -3], [6, -4], [5, -5], [4, -6], [3, -7], [2, -8], [1, -9], [0, -10], [-1, -9], [-2, -8], [-3, -7], [-4, -6], [-5, -5], [-6, -4], [-7, -3], [-8, -2], [-9, -1], [-10, 0], [-9, 1], [-8, 2], [-7, 3], [-6, 4], [-5, 5], [-4, 6], [-3, 7], [-2, 8], [-1, 9], # distance 10
-   [0, 11], [1, 10], [2, 9], [3, 8], [4, 7], [5, 6], [6, 5], [7, 4], [8, 3], [9, 2], [10, 1], [11, 0], [10, -1], [9, -2], [8, -3], [7, -4], [6, -5], [5, -6], [4, -7], [3, -8], [2, -9], [1, -10], [0, -11], [-1, -10], [-2, -9], [-3, -8], [-4, -7], [-5, -6], [-6, -5], [-7, -4], [-8, -3], [-9, -2], [-10, -1], [-11, 0], [-10, 1], [-9, 2], [-8, 3], [-7, 4], [-6, 5], [-5, 6], [-4, 7], [-3, 8], [-2, 9], [-1, 10], # distance 11
-   [0, 12], [1, 11], [2, 10], [3, 9], [4, 8], [5, 7], [6, 6], [7, 5], [8, 4], [9, 3], [10, 2], [11, 1], [12, 0], [11, -1], [10, -2], [9, -3], [8, -4], [7, -5], [6, -6], [5, -7], [4, -8], [3, -9], [2, -10], [1, -11], [0, -12], [-1, -11], [-2, -10], [-3, -9], [-4, -8], [-5, -7], [-6, -6], [-7, -5], [-8, -4], [-9, -3], [-10, -2], [-11, -1], [-12, 0], [-11, 1], [-10, 2], [-9, 3], [-8, 4], [-7, 5], [-6, 6], [-5, 7], [-4, 8], [-3, 9], [-2, 10], [-1, 11], # distance 12
-   [0, 13], [1, 12], [2, 11], [3, 10], [4, 9], [5, 8], [6, 7], [7, 6], [8, 5], [9, 4], [10, 3], [11, 2], [12, 1], [13, 0], [12, -1], [11, -2], [10, -3], [9, -4], [8, -5], [7, -6], [6, -7], [5, -8], [4, -9], [3, -10], [2, -11], [1, -12], [0, -13], [-1, -12], [-2, -11], [-3, -10], [-4, -9], [-5, -8], [-6, -7], [-7, -6], [-8, -5], [-9, -4], [-10, -3], [-11, -2], [-12, -1], [-13, 0], [-12, 1], [-11, 2], [-10, 3], [-9, 4], [-8, 5], [-7, 6], [-6, 7], [-5, 8], [-4, 9], [-3, 10], [-2, 11], [-1, 12], # distance 13
-   [0, 14], [1, 13], [2, 12], [3, 11], [4, 10], [5, 9], [6, 8], [7, 7], [8, 6], [9, 5], [10, 4], [11, 3], [12, 2], [13, 1], [14, 0], [13, -1], [12, -2], [11, -3], [10, -4], [9, -5], [8, -6], [7, -7], [6, -8], [5, -9], [4, -10], [3, -11], [2, -12], [1, -13], [0, -14], [-1, -13], [-2, -12], [-3, -11], [-4, -10], [-5, -9], [-6, -8], [-7, -7], [-8, -6], [-9, -5], [-10, -4], [-11, -3], [-12, -2], [-13, -1], [-14, 0], [-13, 1], [-12, 2], [-11, 3], [-10, 4], [-9, 5], [-8, 6], [-7, 7], [-6, 8], [-5, 9], [-4, 10], [-3, 11], [-2, 12], [-1, 13], # distance 14
-   [0, 15], [1, 14], [2, 13], [3, 12], [4, 11], [5, 10], [6, 9], [7, 8], [8, 7], [9, 6], [10, 5], [11, 4], [12, 3], [13, 2], [14, 1], [15, 0], [14, -1], [13, -2], [12, -3], [11, -4], [10, -5], [9, -6], [8, -7], [7, -8], [6, -9], [5, -10], [4, -11], [3, -12], [2, -13], [1, -14], [0, -15], [-1, -14], [-2, -13], [-3, -12], [-4, -11], [-5, -10], [-6, -9], [-7, -8], [-8, -7], [-9, -6], [-10, -5], [-11, -4], [-12, -3], [-13, -2], [-14, -1], [-15, 0], [-14, 1], [-13, 2], [-12, 3], [-11, 4], [-10, 5], [-9, 6], [-8, 7], [-7, 8], [-6, 9], [-5, 10], [-4, 11], [-3, 12], [-2, 13], [-1, 14], # distance 15
-   [0, 16], [1, 15], [2, 14], [3, 13], [4, 12], [5, 11], [6, 10], [7, 9], [8, 8], [9, 7], [10, 6], [11, 5], [12, 4], [13, 3], [14, 2], [15, 1], [16, 0], [15, -1], [14, -2], [13, -3], [12, -4], [11, -5], [10, -6], [9, -7], [8, -8], [7, -9], [6, -10], [5, -11], [4, -12], [3, -13], [2, -14], [1, -15], [0, -16], [-1, -15], [-2, -14], [-3, -13], [-4, -12], [-5, -11], [-6, -10], [-7, -9], [-8, -8], [-9, -7], [-10, -6], [-11, -5], [-12, -4], [-13, -3], [-14, -2], [-15, -1], [-16, 0], [-15, 1], [-14, 2], [-13, 3], [-12, 4], [-11, 5], [-10, 6], [-9, 7], [-8, 8], [-7, 9], [-6, 10], [-5, 11], [-4, 12], [-3, 13], [-2, 14], [-1, 15], # distance 16
-   [0, 17], [1, 16], [2, 15], [3, 14], [4, 13], [5, 12], [6, 11], [7, 10], [8, 9], [9, 8], [10, 7], [11, 6], [12, 5], [13, 4], [14, 3], [15, 2], [16, 1], [17, 0], [16, -1], [15, -2], [14, -3], [13, -4], [12, -5], [11, -6], [10, -7], [9, -8], [8, -9], [7, -10], [6, -11], [5, -12], [4, -13], [3, -14], [2, -15], [1, -16], [0, -17], [-1, -16], [-2, -15], [-3, -14], [-4, -13], [-5, -12], [-6, -11], [-7, -10], [-8, -9], [-9, -8], [-10, -7], [-11, -6], [-12, -5], [-13, -4], [-14, -3], [-15, -2], [-16, -1], [-17, 0], [-16, 1], [-15, 2], [-14, 3], [-13, 4], [-12, 5], [-11, 6], [-10, 7], [-9, 8], [-8, 9], [-7, 10], [-6, 11], [-5, 12], [-4, 13], [-3, 14], [-2, 15], [-1, 16], # distance 17
-   [0, 18], [1, 17], [2, 16], [3, 15], [4, 14], [5, 13], [6, 12], [7, 11], [8, 10], [9, 9], [10, 8], [11, 7], [12, 6], [13, 5], [14, 4], [15, 3], [16, 2], [17, 1], [18, 0], [17, -1], [16, -2], [15, -3], [14, -4], [13, -5], [12, -6], [11, -7], [10, -8], [9, -9], [8, -10], [7, -11], [6, -12], [5, -13], [4, -14], [3, -15], [2, -16], [1, -17], [0, -18], [-1, -17], [-2, -16], [-3, -15], [-4, -14], [-5, -13], [-6, -12], [-7, -11], [-8, -10], [-9, -9], [-10, -8], [-11, -7], [-12, -6], [-13, -5], [-14, -4], [-15, -3], [-16, -2], [-17, -1], [-18, 0], [-17, 1], [-16, 2], [-15, 3], [-14, 4], [-13, 5], [-12, 6], [-11, 7], [-10, 8], [-9, 9], [-8, 10], [-7, 11], [-6, 12], [-5, 13], [-4, 14], [-3, 15], [-2, 16], [-1, 17], # distance 18
-   [0, 19], [1, 18], [2, 17], [3, 16], [4, 15], [5, 14], [6, 13], [7, 12], [8, 11], [9, 10], [10, 9], [11, 8], [12, 7], [13, 6], [14, 5], [15, 4], [16, 3], [17, 2], [18, 1], [19, 0], [18, -1], [17, -2], [16, -3], [15, -4], [14, -5], [13, -6], [12, -7], [11, -8], [10, -9], [9, -10], [8, -11], [7, -12], [6, -13], [5, -14], [4, -15], [3, -16], [2, -17], [1, -18], [0, -19], [-1, -18], [-2, -17], [-3, -16], [-4, -15], [-5, -14], [-6, -13], [-7, -12], [-8, -11], [-9, -10], [-10, -9], [-11, -8], [-12, -7], [-13, -6], [-14, -5], [-15, -4], [-16, -3], [-17, -2], [-18, -1], [-19, 0], [-18, 1], [-17, 2], [-16, 3], [-15, 4], [-14, 5], [-13, 6], [-12, 7], [-11, 8], [-10, 9], [-9, 10], [-8, 11], [-7, 12], [-6, 13], [-5, 14], [-4, 15], [-3, 16], [-2, 17], [-1, 18], # distance 19
-   [0, 20], [1, 19], [2, 18], [3, 17], [4, 16], [5, 15], [6, 14], [7, 13], [8, 12], [9, 11], [10, 10], [11, 9], [12, 8], [13, 7], [14, 6], [15, 5], [16, 4], [17, 3], [18, 2], [19, 1], [20, 0], [19, -1], [18, -2], [17, -3], [16, -4], [15, -5], [14, -6], [13, -7], [12, -8], [11, -9], [10, -10], [9, -11], [8, -12], [7, -13], [6, -14], [5, -15], [4, -16], [3, -17], [2, -18], [1, -19], [0, -20], [-1, -19], [-2, -18], [-3, -17], [-4, -16], [-5, -15], [-6, -14], [-7, -13], [-8, -12], [-9, -11], [-10, -10], [-11, -9], [-12, -8], [-13, -7], [-14, -6], [-15, -5], [-16, -4], [-17, -3], [-18, -2], [-19, -1], [-20, 0], [-19, 1], [-18, 2], [-17, 3], [-16, 4], [-15, 5], [-14, 6], [-13, 7], [-12, 8], [-11, 9], [-10, 10], [-9, 11], [-8, 12], [-7, 13], [-6, 14], [-5, 15], [-4, 16], [-3, 17], [-2, 18], [-1, 19], # distance 20
-  ].each do |dx, dy|
+def cheats_for_cells_and_maxdistance(grid, max_distance)
+  vectors = []
+  (2..max_distance).each do |distance|
+    vectors += vectors_for_distance distance
+  end
+  cheats = []
+  grid.each do |row|
+    row.each do |cell|
+      cheats += cheats_for_cell_and_vectors(cell, grid, vectors) if cell[:symbol] != '#'
+    end
+  end
+  cheats
+end
+
+def cheats_for_cell_and_vectors(cell, grid, vectors)
+  cheats = []
+  x, y = cell[:position]
+  vectors.each do |dx, dy|
     new_x = x + dx
     new_y = y + dy
     next if new_x < 0 || new_y < 0 || new_x >= grid[0].size || new_y >= grid.size
-    candidate = nodes.find { |node| node[:position] == [new_x, new_y] }
-    next if candidate.nil?
-    saved_cost = node[:min_cost] - candidate[:min_cost] - 2
-    node[:cheats] << [x, y, dx, dy, saved_cost] if saved_cost >= 100
+    candidate = grid[new_y][new_x]
+    next if candidate[:symbol] == '#'
+
+    saved_cost = cell[:min_cost] - candidate[:min_cost] - dx.abs - dy.abs
+    cheats << [x, y, dx, dy, saved_cost] if saved_cost >= 100
+  end
+  cheats
+end
+
+def vectors_for_distance(distance)
+  vectors = []
+  (0..distance).each do |dx|
+    dy = distance - dx
+    vectors << [dx, dy]
+    vectors << [-dx, dy]
+    vectors << [dx, -dy]
+    vectors << [-dx, -dy]
+  end
+  vectors.uniq # need this because if dx or dy is 0, then -dx or -dy produces the same vector
+end
+
+def draw_grid(grid)
+  grid.each do |row|
+    row.each do |cell|
+      print cell[:min_cost].nil? ? '...' : cell[:min_cost].to_s.rjust(3, ' ')
+    end
+    puts
   end
 end
