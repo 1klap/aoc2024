@@ -1,0 +1,75 @@
+#!/usr/bin/env ruby
+
+require_relative '../cmd_line_helper'
+
+END {
+  part1_fun = ->(input_path) { part1(input_path) }
+  part2_fun = ->(input_path) { part2(input_path) }
+  run part1_fun, part2_fun
+}
+
+def part1(input_path)
+  puts "Part 1 for file: #{input_path}"
+  input = File.read(input_path)
+  sequences = input.split("\n").map(&:chars)
+  p "sequences: #{sequences}"
+  current = 'A'
+  sequences.each do |sequence|
+    sequence.each do |c|
+      # p "current: #{current}, c: #{c}"
+      v0 = movement_vector_keypad(current, c)
+      p "v0: #{v0}"
+      current = c
+    end
+  end.join
+  res = 42
+  puts "Answer Part 1: #{res}"
+end
+
+KEYPAD_VECTORS = {
+  'A,0': [-1, 0], 'A,1': [-2, -1], 'A,2': [-1, -1], 'A,3': [0, -1], 'A,4': [-2, -2], 'A,5': [-1, -2], 'A,6': [0, -2],
+  'A,7': [-2, -3], 'A,8': [-1, -3], 'A,9': [0, -3], '0,1': [-1, -1], '0,2': [0, -1], '0,3': [1, -1], '0,4': [-1, -2],
+  '0,5': [0, -2], '0,6': [1, -2], '0,7': [-1, -3], '0,8': [0, -3], '0,9': [1, -3], '1,2': [1, 0], '1,3': [2, 0],
+  '1,4': [0, -1], '1,5': [1, -1], '1,6': [2, -1], '1,7': [0, -2], '1,8': [1, -2], '1,9': [2, -2], '2,3': [1, 0],
+  '2,4': [-1, -1], '2,5': [0, -1], '2,6': [1, -1], '2,7': [-1, -2], '2,8': [0, -2], '2,9': [1, -2], '3,4': [-2, -1],
+  '3,5': [-1, -1], '3,6': [0, -1], '3,7': [-2, -2], '3,8': [-1, -2], '3,9': [0, -2], '4,5': [1, 0], '4,6': [2, 0],
+  '4,7': [0, -1], '4,8': [1, -1], '4,9': [2, -1], '5,6': [1, 0], '5,7': [-1, -1], '5,8': [0, -1], '5,9': [1, -1],
+  '6,7': [-2, -1], '6,8': [-1, -1], '6,9': [0, -1], '7,8': [1, 0], '7,9': [2, 0], '8,9': [1, 0]
+}
+
+DIRECTIONAL_VECTORS = {
+  'A,^': [-1, 0], 'A,v': [-1, -1], 'A,<': [-2, -1], 'A,>': [0, -1], '^,v': [0, -1],
+  '^,<': [-1, -1], '^,>': [1, -1], 'v,<': [-1, 0], 'v,>': [1, 0], '<,>': [2, 0]
+}
+
+def movement_vector_keypad(from, to)
+  return [0, 0] if from == to
+
+  if KEYPAD_VECTORS.has_key? "#{from},#{to}".to_sym
+    KEYPAD_VECTORS["#{from},#{to}".to_sym]
+  else
+    KEYPAD_VECTORS["#{to},#{from}".to_sym].map { |v| -v }
+  end
+end
+
+def movement_vector_directional(from, to)
+  return [0, 0] if from == to
+
+  if DIRECTIONAL_VECTORS.has_key? "#{from},#{to}".to_sym
+    DIRECTIONAL_VECTORS["#{from},#{to}".to_sym]
+  else
+    DIRECTIONAL_VECTORS["#{to},#{from}".to_sym].map { |v| -v }
+  end
+end
+
+def part2(input_path)
+  puts "Part 2 for file: #{input_path}"
+  # _input = File.read(input_path)
+  # res = input.split("\n")
+  #              .map { |line|
+  #                # TODO: implement logic here
+  #              }.sum
+  res = 42
+  puts "Answer Part 2: #{res}"
+end
+
