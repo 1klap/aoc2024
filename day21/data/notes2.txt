@@ -1,0 +1,37 @@
+"code: 379A full_sequence.size: 68 full_sequence: v<<A>>^AvA^Av<<A>>^AA<vA<A>>^AAvAA<^A>A<vA^>AA<A>Av<<A>A^>AAA<Av>A^A"
+
+v<<A>>^AvA^Av<<A >>^AA<vA<A>>^AAvAA <^A>A<vA^>AA <A>Av<<A>A ^>AAA<Av>A^A"
+
+<A>A< AAv<AA>> ^AvAA ^A<v AAA^>A
+<A>A<AAv<AA >>^AvAA^A <vAAA^>A
+
+^A^^<< A>>A vvvA
+^A^^<<A>>AvvvA
+
+379A
+
+
+AOC: 64 379A: <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+
+<v<A>>^AvA ^A<vA<AA>>^AA vA<^A>AAvA^A <vA>^AA<A>A<v<A >A>^AAAvA<^A>A
+
+<A> Av<<AA >^AA>A vAA^A< vAAA>^A
+<A>Av<<AA>^AA>AvAA ^A<vAAA>^A
+
+^A<<^^A>> AvvvA
+
+379A
+
+
+Self: <A>A   <[AA]v<AA>>^   AvA   A^A<vAAA^>A
+AOC:  <A>A   v<<[AA]>^AA>   AvA   A^A<vAAA>^A
+
+Self: v<<A>>^AvA^A   v<<A[>>^AA]<vA<A>>^AAvAA<^A   >A<vA^>A   A<A>Av<<A>A^>AAA<Av>A^A
+AOC:  <v<A>>^AvA^A   <vA<AA[>>^AA]vA<^A>AAvA       ^A<vA>^A   A<A>A<v<A>A>^AAAvA<^A>A
+
+cost per symbol
+Self: <[AA]v<AA>>^     /     v<<A[>>^AA]<vA<A>>^AAvAA<^A
+      4    3241213
+AOC:  v<<[AA]>^AA>     /     <vA<AA[>>^AA]vA<^A>AAvA
+      321    23212
+

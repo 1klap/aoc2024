@@ -11,22 +11,51 @@ END {
 def part1(input_path)
   puts "Part 1 for file: #{input_path}"
   input = File.read(input_path)
-  sequences = input.split("\n").map(&:chars)
+  sequences = input.split("\n")
   p "sequences: #{sequences}"
-  current = 'A'
+  current_level0 = 'A'
+  sequence_instructions = {}
   sequences.each do |sequence|
-    sequence.each do |c|
-      # p "current: #{current}, c: #{c}"
-      v0 = movement_vector_keypad(current, c)
-      p "v0: #{v0}"
-      current = c
-    end
-  end.join
-  res = 42
+    sequence_instructions[sequence] = { level0: [], level1: [], level2: [] }
+  end
+  sequences.each do |sequence|
+    sequence_instructions[sequence][:level0] = sequence.chars.map do |c|
+      # v0 = movement_vector_keypad(current_level0, c)
+      # symbols = vector_to_symbols v0
+      symbols = mapping_keypad(current_level0, c)
+      current_level0 = c
+      symbols
+    end.join
+  end
+  p "sequence_instructions: #{sequence_instructions}"
+  current_level1 = 'A'
+  sequences.each do |sequence|
+    sequence_instructions[sequence][:level1] = sequence_instructions[sequence][:level0].chars.map do |c|
+      # v1 = movement_vector_directional(current_level1, c)
+      # symbols = vector_to_symbols v1
+      symbols = mapping_directional(current_level1, c)
+      current_level1 = c
+      symbols
+    end.join
+  end
+  current_level2 = 'A'
+  sequences.each do |sequence|
+    sequence_instructions[sequence][:level2] = sequence_instructions[sequence][:level1].chars.map do |c|
+      # v2 = movement_vector_directional(current_level2, c)
+      # symbols = vector_to_symbols v2
+      symbols = mapping_directional(current_level2, c)
+      current_level2 = c
+      symbols
+    end.join
+  end
+  p "sequence_instructions: #{sequence_instructions}"
+  complexities = sequence_instructions.map { |k, v| complexity(k, v[:level2]) }
+  p "complexities: #{complexities}"
+  res = complexities.sum
   puts "Answer Part 1: #{res}"
 end
 
-KEYPAD_VECTORS = {
+NUMERIC_VECTORS = {
   'A,0': [-1, 0], 'A,1': [-2, -1], 'A,2': [-1, -1], 'A,3': [0, -1], 'A,4': [-2, -2], 'A,5': [-1, -2], 'A,6': [0, -2],
   'A,7': [-2, -3], 'A,8': [-1, -3], 'A,9': [0, -3], '0,1': [-1, -1], '0,2': [0, -1], '0,3': [1, -1], '0,4': [-1, -2],
   '0,5': [0, -2], '0,6': [1, -2], '0,7': [-1, -3], '0,8': [0, -3], '0,9': [1, -3], '1,2': [1, 0], '1,3': [2, 0],
@@ -37,18 +66,154 @@ KEYPAD_VECTORS = {
   '6,7': [-2, -1], '6,8': [-1, -1], '6,9': [0, -1], '7,8': [1, 0], '7,9': [2, 0], '8,9': [1, 0]
 }
 
+NUMERIC_TRANSFORM = {
+  'A,0': "<",
+  'A,1': "^<<",
+  'A,2': "<^",
+  'A,3': "^",
+  'A,4': "^^<<",
+  'A,5': "<^^",
+  'A,6': "^^",
+  'A,7': "^^^<<",
+  'A,8': "<^^^",
+  'A,9': "^^^",
+  '0,A': ">",
+  '0,1': "^<",
+  '0,2': "^",
+  '0,3': "^>",
+  '0,4': "^<<",
+  '0,5': "^^",
+  '0,6': "^^>",
+  '0,7': "^^<<",
+  '0,8': "^^^",
+  '0,9': "^^^>",
+  '1,A': ">>v",
+  '1,0': ">v",
+  '1,2': ">",
+  '1,3': ">>",
+  '1,4': "^",
+  '1,5': "^>",
+  '1,6': "^>>",
+  '1,7': "^^",
+  '1,8': "^^>",
+  '1,9': "^^>>",
+  '2,A': "v>",
+  '2,0': "v",
+  '2,1': "<",
+  '2,3': ">",
+  '2,4': "<^",
+  '2,5': "^",
+  '2,6': "^>",
+  '2,7': "<^^",
+  '2,8': "^^",
+  '2,9': "^^>",
+  '3,A': "v",
+  '3,0': "<v",
+  '3,1': "<<",
+  '3,2': "<",
+  '3,4': "<<^",
+  '3,5': "<^",
+  '3,6': "^",
+  '3,7': "<<^^",
+  '3,8': "<^^",
+  '3,9': "^^",
+  '4,A': ">>vv",
+  '4,0': ">vv",
+  '4,1': "v",
+  '4,2': "v>",
+  '4,3': "v>>",
+  '4,5': ">",
+  '4,6': ">>",
+  '4,7': "^",
+  '4,8': "^>",
+  '4,9': "^>>",
+  '5,A': "vv>",
+  '5,0': "vv",
+  '5,1': "<v",
+  '5,2': "v",
+  '5,3': "v>",
+  '5,4': "<",
+  '5,6': ">",
+  '5,7': "<^",
+  '5,8': "^",
+  '5,9': "^>",
+  '6,A': "vv",
+  '6,0': "<vv",
+  '6,1': "<<v",
+  '6,2': "<v",
+  '6,3': "v",
+  '6,4': "<<",
+  '6,5': "<",
+  '6,7': "<<^",
+  '6,8': "<^",
+  '6,9': "^",
+  '7,A': ">>vvv",
+  '7,0': ">vvv",
+  '7,1': "vv",
+  '7,2': "vv>",
+  '7,3': "vv>>",
+  '7,4': "v",
+  '7,5': "v>",
+  '7,6': "v>>",
+  '7,8': ">",
+  '7,9': ">>",
+  '8,A': "vvv>",
+  '8,0': "vvv",
+  '8,1': "<vv",
+  '8,2': "vv",
+  '8,3': "vv>",
+  '8,4': "<v",
+  '8,5': "v",
+  '8,6': "v>",
+  '8,7': "<",
+  '8,9': ">",
+  '9,A': "vvv",
+  '9,0': "<vvv",
+  '9,1': "<<vv",
+  '9,2': "<vv",
+  '9,3': "vv",
+  '9,4': "<<v",
+  '9,5': "<v",
+  '9,6': "v",
+  '9,7': "<<",
+  '9,8': "<",
+}
+
 DIRECTIONAL_VECTORS = {
-  'A,^': [-1, 0], 'A,v': [-1, -1], 'A,<': [-2, -1], 'A,>': [0, -1], '^,v': [0, -1],
-  '^,<': [-1, -1], '^,>': [1, -1], 'v,<': [-1, 0], 'v,>': [1, 0], '<,>': [2, 0]
+  'A,^': [-1, 0], 'A,v': [-1, 1], 'A,<': [-2, 1], 'A,>': [0, 1], '^,v': [0, 1],
+  '^,<': [-1, 1], '^,>': [1, 1], 'v,<': [-1, 0], 'v,>': [1, 0], '<,>': [2, 0]
+}
+
+DIRECTIONAL_TRANSFORM = {
+  'A,^': "<",
+  'A,v': "v<",
+  'A,<': "v<<",
+  'A,>': "v",
+  '^,v': "v",
+  '^,<': "v<",
+  '^,>': "v>",
+  '^,A': ">",
+  'v,<': "<",
+  'v,>': ">",
+  'v,^': "^",
+  'v,A': "^>",
+  '<,>': ">>",
+  '<,A': ">>^",
+  '<,^': ">^",
+  '<,v': ">",
+  '>,<': "<<",
+  '>,A': "^",
+  '>,^': "<^",
+  '>,v': "<",
 }
 
 def movement_vector_keypad(from, to)
   return [0, 0] if from == to
 
-  if KEYPAD_VECTORS.has_key? "#{from},#{to}".to_sym
-    KEYPAD_VECTORS["#{from},#{to}".to_sym]
+  if NUMERIC_VECTORS.has_key? "#{from},#{to}".to_sym
+    NUMERIC_VECTORS["#{from},#{to}".to_sym]
   else
-    KEYPAD_VECTORS["#{to},#{from}".to_sym].map { |v| -v }
+    NUMERIC_VECTORS["#{to},#{from}".to_sym].map { |v| -v }
   end
 end
 
@@ -60,6 +225,31 @@ def movement_vector_directional(from, to)
   else
     DIRECTIONAL_VECTORS["#{to},#{from}".to_sym].map { |v| -v }
   end
+end
+
+def mapping_keypad(from, to)
+  return 'A' if from == to
+  NUMERIC_TRANSFORM["#{from},#{to}".to_sym] + 'A'
+end
+
+def mapping_directional(from, to)
+  return 'A' if from == to
+  DIRECTIONAL_TRANSFORM["#{from},#{to}".to_sym] + 'A'
+end
+
+def vector_to_symbols(v)
+  r = ''
+  v[0].times { r += '>' } if v[0] > 0
+  v[1].abs.times { r += '^' } if v[1] < 0
+  v[0].abs.times { r += '<' } if v[0] < 0
+  v[1].times { r += 'v' } if v[1] > 0
+  r += 'A'
+  r
+end
+
+def complexity(code, full_sequence)
+  p "code: #{code} full_sequence.size: #{full_sequence.size} full_sequence: #{full_sequence}"
+  full_sequence.size * code.to_i
 end
 
 def part2(input_path)

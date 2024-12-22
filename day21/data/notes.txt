@@ -1,0 +1,24 @@
+\"456A\"=>{
+:level0=>\"<<^^A>A>AvvA\",
+:level1=>\"<<vAA>^AA>AvA^AvA^A<vAA>^A\",
+:level2=>\"<<vAA>A>^AAvA<^A>AAvA^A<vA>^A<A>A<vA>^A<A>A<<vA>A>^AAvA<^A>A\"}
+
+"code: 456A full_sequence.size: 60 full_sequence: <<vAA>A>^AAvA<^A>AAvA^A<vA>^A<A>A<vA>^A<A>A<<vA>A>^AAvA<^A>A"
+
+<<vAA>A>^AAvA<^A>AAvA^A<vA>^A<A>A<vA>^A<A>A<<vA>A>^AAvA<^A>A
+
+
+
+
+AOC: 64
+
+456A: <v<A>>^AA<vA<A >>^AAvAA<^A >A<vA>^A<A>A <vA>^A<A>A<v<A>A >^AAvA<^A>A
+
+<AAv< AA>>^ AvA^A vA^A<v AA>^A
+<AAv<AA>>^A vA^AvA^A<vA A>^A
+
+^^<<A >A>Av vA
+^^<<A>A>AvvA
+
+456A
+
