@@ -20,8 +20,6 @@ def part1(input_path)
   end
   sequences.each do |sequence|
     sequence_instructions[sequence][:level0] = sequence.chars.map do |c|
-      # v0 = movement_vector_keypad(current_level0, c)
-      # symbols = vector_to_symbols v0
       symbols = mapping_keypad(current_level0, c)
       current_level0 = c
       symbols
@@ -31,8 +29,6 @@ def part1(input_path)
   current_level1 = 'A'
   sequences.each do |sequence|
     sequence_instructions[sequence][:level1] = sequence_instructions[sequence][:level0].chars.map do |c|
-      # v1 = movement_vector_directional(current_level1, c)
-      # symbols = vector_to_symbols v1
       symbols = mapping_directional(current_level1, c)
       current_level1 = c
       symbols
@@ -41,154 +37,36 @@ def part1(input_path)
   current_level2 = 'A'
   sequences.each do |sequence|
     sequence_instructions[sequence][:level2] = sequence_instructions[sequence][:level1].chars.map do |c|
-      # v2 = movement_vector_directional(current_level2, c)
-      # symbols = vector_to_symbols v2
       symbols = mapping_directional(current_level2, c)
       current_level2 = c
       symbols
     end.join
   end
-  p "sequence_instructions: #{sequence_instructions}"
   complexities = sequence_instructions.map { |k, v| complexity(k, v[:level2]) }
-  p "complexities: #{complexities}"
   res = complexities.sum
   puts "Answer Part 1: #{res}"
 end
 
 NUMERIC_TRANSFORM = {
-  'A,0': "<",
-  'A,1': "^<<",
-  'A,2': "<^",
-  'A,3': "^",
-  'A,4': "^^<<",
-  'A,5': "<^^",
-  'A,6': "^^",
-  'A,7': "^^^<<",
-  'A,8': "<^^^",
-  'A,9': "^^^",
-  '0,A': ">",
-  '0,1': "^<",
-  '0,2': "^",
-  '0,3': "^>",
-  '0,4': "^<<",
-  '0,5': "^^",
-  '0,6': "^^>",
-  '0,7': "^^<<",
-  '0,8': "^^^",
-  '0,9': "^^^>",
-  '1,A': ">>v",
-  '1,0': ">v",
-  '1,2': ">",
-  '1,3': ">>",
-  '1,4': "^",
-  '1,5': "^>",
-  '1,6': "^>>",
-  '1,7': "^^",
-  '1,8': "^^>",
-  '1,9': "^^>>",
-  '2,A': "v>",
-  '2,0': "v",
-  '2,1': "<",
-  '2,3': ">",
-  '2,4': "<^",
-  '2,5': "^",
-  '2,6': "^>",
-  '2,7': "<^^",
-  '2,8': "^^",
-  '2,9': "^^>",
-  '3,A': "v",
-  '3,0': "<v",
-  '3,1': "<<",
-  '3,2': "<",
-  '3,4': "<<^",
-  '3,5': "<^",
-  '3,6': "^",
-  '3,7': "<<^^",
-  '3,8': "<^^",
-  '3,9': "^^",
-  '4,A': ">>vv",
-  '4,0': ">vv",
-  '4,1': "v",
-  '4,2': "v>",
-  '4,3': "v>>",
-  '4,5': ">",
-  '4,6': ">>",
-  '4,7': "^",
-  '4,8': "^>",
-  '4,9': "^>>",
-  '5,A': "vv>",
-  '5,0': "vv",
-  '5,1': "<v",
-  '5,2': "v",
-  '5,3': "v>",
-  '5,4': "<",
-  '5,6': ">",
-  '5,7': "<^",
-  '5,8': "^",
-  '5,9': "^>",
-  '6,A': "vv",
-  '6,0': "<vv",
-  '6,1': "<<v",
-  '6,2': "<v",
-  '6,3': "v",
-  '6,4': "<<",
-  '6,5': "<",
-  '6,7': "<<^",
-  '6,8': "<^",
-  '6,9': "^",
-  '7,A': ">>vvv",
-  '7,0': ">vvv",
-  '7,1': "vv",
-  '7,2': "vv>",
-  '7,3': "vv>>",
-  '7,4': "v",
-  '7,5': "v>",
-  '7,6': "v>>",
-  '7,8': ">",
-  '7,9': ">>",
-  '8,A': "vvv>",
-  '8,0': "vvv",
-  '8,1': "<vv",
-  '8,2': "vv",
-  '8,3': "vv>",
-  '8,4': "<v",
-  '8,5': "v",
-  '8,6': "v>",
-  '8,7': "<",
-  '8,9': ">",
-  '9,A': "vvv",
-  '9,0': "<vvv",
-  '9,1': "<<vv",
-  '9,2': "<vv",
-  '9,3': "vv",
-  '9,4': "<<v",
-  '9,5': "<v",
-  '9,6': "v",
-  '9,7': "<<",
-  '9,8': "<",
+  'A,0': "<", 'A,1': "^<<", 'A,2': "<^", 'A,3': "^", 'A,4': "^^<<", 'A,5': "<^^", 'A,6': "^^", 'A,7': "^^^<<", 'A,8': "<^^^", 'A,9': "^^^",
+  '0,A': ">", '0,1': "^<", '0,2': "^", '0,3': "^>", '0,4': "^<<", '0,5': "^^", '0,6': "^^>", '0,7': "^^<<", '0,8': "^^^", '0,9': "^^^>",
+  '1,A': ">>v", '1,0': ">v", '1,2': ">", '1,3': ">>", '1,4': "^", '1,5': "^>", '1,6': "^>>", '1,7': "^^", '1,8': "^^>", '1,9': "^^>>",
+  '2,A': "v>", '2,0': "v", '2,1': "<", '2,3': ">", '2,4': "<^", '2,5': "^", '2,6': "^>", '2,7': "<^^", '2,8': "^^", '2,9': "^^>",
+  '3,A': "v", '3,0': "<v", '3,1': "<<", '3,2': "<", '3,4': "<<^", '3,5': "<^", '3,6': "^", '3,7': "<<^^", '3,8': "<^^", '3,9': "^^",
+  '4,A': ">>vv", '4,0': ">vv", '4,1': "v", '4,2': "v>", '4,3': "v>>", '4,5': ">", '4,6': ">>", '4,7': "^", '4,8': "^>", '4,9': "^>>",
+  '5,A': "vv>", '5,0': "vv", '5,1': "<v", '5,2': "v", '5,3': "v>", '5,4': "<", '5,6': ">", '5,7': "<^", '5,8': "^", '5,9': "^>",
+  '6,A': "vv", '6,0': "<vv", '6,1': "<<v", '6,2': "<v", '6,3': "v", '6,4': "<<", '6,5': "<", '6,7': "<<^", '6,8': "<^", '6,9': "^",
+  '7,A': ">>vvv", '7,0': ">vvv", '7,1': "vv", '7,2': "vv>", '7,3': "vv>>", '7,4': "v", '7,5': "v>", '7,6': "v>>", '7,8': ">", '7,9': ">>",
+  '8,A': "vvv>", '8,0': "vvv", '8,1': "<vv", '8,2': "vv", '8,3': "vv>", '8,4': "<v", '8,5': "v", '8,6': "v>", '8,7': "<", '8,9': ">",
+  '9,A': "vvv", '9,0': "<vvv", '9,1': "<<vv", '9,2': "<vv", '9,3': "vv", '9,4': "<<v", '9,5': "<v", '9,6': "v", '9,7': "<<", '9,8': "<",
 }
 
 DIRECTIONAL_TRANSFORM = {
-  'A,^': "<",
-  'A,v': "v<",
-  'A,<': "v<<",
-  'A,>': "v",
-  '^,v': "v",
-  '^,<': "v<",
-  '^,>': "v>",
-  '^,A': ">",
-  'v,<': "<",
-  'v,>': ">",
-  'v,^': "^",
-  'v,A': "^>",
-  '<,>': ">>",
-  '<,A': ">>^",
-  '<,^': ">^",
-  '<,v': ">",
-  '>,<': "<<",
-  '>,A': "^",
-  '>,^': "<^",
-  '>,v': "<",
+  'A,^': "<", 'A,v': "v<", 'A,<': "v<<", 'A,>': "v",
+  '^,v': "v", '^,<': "v<", '^,>': "v>", '^,A': ">",
+  'v,<': "<", 'v,>': ">", 'v,^': "^", 'v,A': "^>",
+  '<,>': ">>", '<,A': ">>^", '<,^': ">^", '<,v': ">",
+  '>,<': "<<", '>,A': "^", '>,^': "<^", '>,v': "<",
 }
 
 def mapping_keypad(from, to)
@@ -201,18 +79,7 @@ def mapping_directional(from, to)
   DIRECTIONAL_TRANSFORM["#{from},#{to}".to_sym] + 'A'
 end
 
-def vector_to_symbols(v)
-  r = ''
-  v[0].times { r += '>' } if v[0] > 0
-  v[1].abs.times { r += '^' } if v[1] < 0
-  v[0].abs.times { r += '<' } if v[0] < 0
-  v[1].times { r += 'v' } if v[1] > 0
-  r += 'A'
-  r
-end
-
 def complexity(code, full_sequence)
-  # p "code: #{code} full_sequence.size: #{full_sequence.size} full_sequence: #{full_sequence}"
   full_sequence.size * code.to_i
 end
 
@@ -220,7 +87,7 @@ def part2(input_path)
   puts "Part 2 for file: #{input_path}"
   input = File.read(input_path)
   sequences = input.split("\n")
-  p "sequences: #{sequences}"
+  # p "sequences: #{sequences}"
   current_level0 = 'A'
   sequence_instructions = {}
   sequences.each do |sequence|
@@ -234,10 +101,8 @@ def part2(input_path)
       symbols
     end.join
   end
-  p "sequence_instructions: #{sequence_instructions}"
-
-  robot_count = 18
-
+  # p "sequence_instructions: #{sequence_instructions}"
+  robot_count = 25
   robot_count.times do |i|
     p "i: #{i}"
     current_level_i = 'A'
@@ -250,15 +115,14 @@ def part2(input_path)
       p "sequence #{sequence} level#{i+1}: size #{sequence_instructions[sequence]["level#{i+1}".to_sym].size}"
     end
   end
-  # p "sequence_instructions: #{sequence_instructions}"
-  # complexities = sequence_instructions.map { |k, v| complexity(k, v[:level25]) }
   complexities = sequence_instructions.map { |k, v| complexity(k, v["level#{robot_count}".to_sym]) }
   p "complexities: #{complexities}"
   res = complexities.sum
   puts "Answer Part 2: #{res}"
 end
 
-# timing
+# timing estimates for part2
+# robot_count => time to finish
 # 10 => 0.19s
 # 11 => 0.44s
 # 12 => 1.02s
@@ -267,8 +131,8 @@ end
 # 15 => 19.43s
 # 16 => 52.48s
 # 17 => 137.90s
+# 18 => 361.54s
 #
-# 18 => 394.67s
 # 19 => 1077.67s
 # 20 => 2926.67s
 # 21 => 7943.67s
